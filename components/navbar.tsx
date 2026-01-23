@@ -1,141 +1,86 @@
-import {
-  Navbar as HeroUINavbar,
-  NavbarContent,
-  NavbarMenu,
-  NavbarMenuToggle,
-  NavbarBrand,
-  NavbarItem,
-  NavbarMenuItem,
-} from "@heroui/navbar";
-import { Button } from "@heroui/button";
-import { Kbd } from "@heroui/kbd";
-import { Link } from "@heroui/link";
-import { Input } from "@heroui/input";
-import { link as linkStyles } from "@heroui/theme";
-import NextLink from "next/link";
-import clsx from "clsx";
+"use client"
+import { Home, Search, Calendar,BookOpen, MessageSquare, User as UserIcon } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { User, UserRole } from '@/types/types';
 
-import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
-import {
-  TwitterIcon,
-  GithubIcon,
-  DiscordIcon,
-  HeartFilledIcon,
-  SearchIcon,
-  Logo,
-} from "@/components/icons";
+const MOCK_USER: User = {
+  id: 'u1',
+  name: 'Adebayo Olumide',
+  avatar: 'https://picsum.photos/seed/adebayo/200',
+  role: UserRole.STUDENT,
+  institution: 'University of Lagos',
+  major: 'Computer Science',
+  rating: 4.8,
+  bio: 'Final year CS student at Unilag. Passionate about Algorithms and Backend Dev.',
+  subjects: ['Calculus', 'Python', 'Algorithms'],
+  isVerified: false
+};
 
-export const Navbar = () => {
-  const searchInput = (
-    <Input
-      aria-label="Search"
-      classNames={{
-        inputWrapper: "bg-default-100",
-        input: "text-sm",
-      }}
-      endContent={
-        <Kbd className="hidden lg:inline-block" keys={["command"]}>
-          K
-        </Kbd>
-      }
-      labelPlacement="outside"
-      placeholder="Search..."
-      startContent={
-        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
-      }
-      type="search"
-    />
-  );
+export const Navigation: React.FC = () => {
+
+  const pathname = usePathname()
+  const router = useRouter()
+
+  
+
+  const navItems = [
+    { icon: <Home size={22} />, label: 'Home', path: '/' },
+    { icon: <Search size={22} />, label: 'Explore', path: '/explore' },
+    { icon: <Calendar size={22} />, label: 'Schedule', path: '/schedule' },
+    { icon: <MessageSquare size={22} />, label: 'Messages', path: '/messages' },
+    { icon: <UserIcon size={22} />, label: 'Profile', path: '/profile' },
+  ];
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
-      <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-        <NavbarBrand as="li" className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/">
-            <Logo />
-            <p className="font-bold text-inherit">ACME</p>
-          </NextLink>
-        </NavbarBrand>
-        <ul className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink
-                className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium",
-                )}
-                color="foreground"
-                href={item.href}
-              >
-                {item.label}
-              </NextLink>
-            </NavbarItem>
-          ))}
-        </ul>
-      </NavbarContent>
-
-      <NavbarContent
-        className="hidden sm:flex basis-1/5 sm:basis-full"
-        justify="end"
-      >
-        <NavbarItem className="hidden sm:flex gap-2">
-          <Link isExternal aria-label="Twitter" href={siteConfig.links.twitter}>
-            <TwitterIcon className="text-default-500" />
-          </Link>
-          <Link isExternal aria-label="Discord" href={siteConfig.links.discord}>
-            <DiscordIcon className="text-default-500" />
-          </Link>
-          <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-            <GithubIcon className="text-default-500" />
-          </Link>
-          <ThemeSwitch />
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem>
-        <NavbarItem className="hidden md:flex">
-          <Button
-            isExternal
-            as={Link}
-            className="text-sm font-normal text-default-600 bg-default-100"
-            href={siteConfig.links.sponsor}
-            startContent={<HeartFilledIcon className="text-danger" />}
-            variant="flat"
+    <>
+      {/* Mobile Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex justify-between items-center z-50 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] md:hidden">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            onClick={() => router.push(item.path)}
+            className={`flex flex-col items-center p-2 rounded-xl transition-all ${
+              pathname === item.path ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400'
+            }`}
           >
-            Sponsor
-          </Button>
-        </NavbarItem>
-      </NavbarContent>
+            {item.icon}
+            <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
-      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
-        <Link isExternal aria-label="Github" href={siteConfig.links.github}>
-          <GithubIcon className="text-default-500" />
-        </Link>
-        <ThemeSwitch />
-        <NavbarMenuToggle />
-      </NavbarContent>
-
-      <NavbarMenu>
-        {searchInput}
-        <div className="mx-4 mt-2 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navMenuItems.length - 1
-                      ? "danger"
-                      : "foreground"
-                }
-                href="#"
-                size="lg"
-              >
-                {item.label}
-              </Link>
-            </NavbarMenuItem>
+      {/* Desktop Sidebar Navigation */}
+      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-slate-200 p-6 flex-col z-50">
+        <div className="flex items-center space-x-3 mb-10 px-2">
+          <div className="bg-indigo-600 p-2 rounded-xl">
+            <BookOpen className="text-white" size={24} />
+          </div>
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            Academia
+          </span>
+        </div>
+        <div className="space-y-2 flex-1">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => router.push(item.path)}
+              className={`w-full flex items-center space-x-4 px-4 py-3 rounded-2xl transition-all font-medium ${
+                pathname === item.path 
+                  ? 'text-indigo-600 bg-indigo-50 shadow-sm' 
+                  : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
           ))}
         </div>
-      </NavbarMenu>
-    </HeroUINavbar>
+        <div className="mt-auto p-4 bg-slate-50 rounded-2xl">
+          <p className="text-xs text-slate-500 font-medium mb-1">Signed in as</p>
+          <p className="text-sm font-bold text-slate-900 truncate">{MOCK_USER.name}</p>
+        </div>
+      </nav>
+    </>
   );
 };
