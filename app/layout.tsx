@@ -4,10 +4,10 @@ import { Link } from "@heroui/link";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
+import SessionAppProvider from "@/config/session";
+
 
 import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
-import { Navigation } from "@/components/navbar";
 
 export const metadata: Metadata = {
   title: {
@@ -37,18 +37,14 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-          
-          fontSans.variable,
+         
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="min-h-screen bg-slate-50 md:pl-64">
-            <div className="max-w-5xl mx-auto min-h-screen bg-white md:shadow-sm pb-24 md:pb-8 relative">
-              {children}
-            </div>
-            <Navigation />
-          </div>
-        </Providers>
+        <SessionAppProvider>
+          <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
+            {children} 
+          </Providers>
+        </SessionAppProvider>
       </body>
     </html>
   );

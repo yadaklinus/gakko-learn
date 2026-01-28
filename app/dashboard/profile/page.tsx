@@ -1,13 +1,22 @@
 
 import React from 'react';
 import { Settings, ChevronRight, LogOut, Shield, CreditCard, Award, HelpCircle, Edit3, Globe } from 'lucide-react';
-import { User, UserRole } from '../types';
+import { User, UserRole } from '@/types/types';
 
-interface ProfileViewProps {
-  user: User;
-}
+const user: User = {
+  id: 'u1',
+  name: 'Adebayo Olumide',
+  avatar: 'https://picsum.photos/seed/adebayo/200',
+  role: UserRole.STUDENT,
+  institution: 'University of Lagos',
+  major: 'Computer Science',
+  rating: 4.8,
+  bio: 'Final year CS student at Unilag. Passionate about Algorithms and Backend Dev.',
+  subjects: ['Calculus', 'Python', 'Algorithms'],
+  isVerified: false
+};
 
-const ProfileView: React.FC<ProfileViewProps> = ({ user }) => {
+const ProfileView: React.FC = () => {
   const menuItems = [
     { icon: <Shield size={20} />, label: 'Verification Center', color: 'text-emerald-500' },
     { icon: <CreditCard size={20} />, label: 'Payments & Earnings', color: 'text-indigo-500' },

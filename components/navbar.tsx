@@ -25,11 +25,11 @@ export const Navigation: React.FC = () => {
   
 
   const navItems = [
-    { icon: <Home size={22} />, label: 'Home', path: '/' },
-    { icon: <Search size={22} />, label: 'Explore', path: '/explore' },
-    { icon: <Calendar size={22} />, label: 'Schedule', path: '/schedule' },
-    { icon: <MessageSquare size={22} />, label: 'Messages', path: '/messages' },
-    { icon: <UserIcon size={22} />, label: 'Profile', path: '/profile' },
+    { icon: <Home size={22} />, label: 'Home', path: '/dashboard' },
+    { icon: <Search size={22} />, label: 'Explore', path: '/dashboard/explore' },
+    { icon: <Calendar size={22} />, label: 'Schedule', path: '/dashboard/schedule' },
+    { icon: <MessageSquare size={22} />, label: 'Messages', path: '/dashboard/messages' },
+    { icon: <UserIcon size={22} />, label: 'Profile', path: '/dashboard/profile' },
   ];
 
   return (

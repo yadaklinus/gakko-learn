@@ -1,13 +1,26 @@
-
+"use client"
 import React, { useState } from 'react';
 import { Bell, BookOpen, Star, BrainCircuit, X, Sparkles, Mic } from 'lucide-react';
-import { User, Session } from '../types';
-import { geminiService } from '../services/geminiService';
-import { LiveAssistant } from '../components/LiveAssistant';
+import { User, Session,UserRole } from '@/types/types';
+//import { geminiService } from '../services/geminiService';
+import { LiveAssistant } from '@/components/LiveAssistant';
 
-interface HomeViewProps {
-  user: User;
-}
+import { useSession } from 'next-auth/react';
+
+const user: User = {
+  id: 'u1',
+  name: 'Adebayo Olumide',
+  avatar: 'https://picsum.photos/seed/adebayo/200',
+  role: UserRole.STUDENT,
+  institution: 'University of Lagos',
+  major: 'Computer Science',
+  rating: 4.8,
+  bio: 'Final year CS student at Unilag. Passionate about Algorithms and Backend Dev.',
+  subjects: ['Calculus', 'Python', 'Algorithms'],
+  isVerified: false
+};
+
+
 
 const MOCK_SESSIONS: Session[] = [
   {
@@ -23,15 +36,20 @@ const MOCK_SESSIONS: Session[] = [
   }
 ];
 
-const HomeView: React.FC<HomeViewProps> = ({ user }) => {
+const HomeView: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [studyGuide, setStudyGuide] = useState<string | null>(null);
   const [isLiveOpen, setIsLiveOpen] = useState(false);
 
+  const {data,status} = useSession()
+
+  console.log(data)
+
   const handleGenerateGuide = async () => {
     setIsGenerating(true);
     const session = MOCK_SESSIONS[0];
-    const guide = await geminiService.generateStudyGuide(session.subject, session.topic);
+    const guide = "ok"
+    //await geminiService.generateStudyGuide(session.subject, session.topic);
     setStudyGuide(guide);
     setIsGenerating(false);
   };

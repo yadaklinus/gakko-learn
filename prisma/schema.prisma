@@ -1,0 +1,199 @@
+// SIMPLIFIED MVP PRISMA SCHEMA
+// Focus: Core peer tutoring functionality only
+
+generator client {
+  provider = "prisma-client-js"
+ 
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================
+// AUTHENTICATION (NextAuth)
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? 
+  access_token      String? 
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? 
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// USER (Student & Tutor in one model)
+// ============================================
+
+enum UserRole {
+  STUDENT
+  TUTOR
+  BOTH
+}
+
+model User {
+  id       String  @id @default(cuid())
+  name     String
+  email    String  @unique
+  image    String?
+  password String? // For email/password auth
+  
+  // Basic Profile
+  role        UserRole @default(STUDENT)
+  institution String?
+  major       String?
+  bio         String?  
+  
+  // Tutor-specific (only if role = TUTOR or BOTH)
+  hourlyRate  Float?   // Simple pricing, no currency complexity
+  subjects    String?//[] // Array of subject names (simple!)
+  
+  // Simple Stats
+  rating      Float   @default(0)
+  totalReviews Int    @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  accounts           Account[]
+  sessions           Session[]
+  bookingsAsStudent  Booking[] @relation("StudentBookings")
+  bookingsAsTutor    Booking[] @relation("TutorBookings")
+  reviewsGiven       Review[]  @relation("ReviewsGiven")
+  reviewsReceived    Review[]  @relation("ReviewsReceived")
+  messages           Message[]
+
+  @@index([email])
+  @@index([role])
+}
+
+// ============================================
+// BOOKING (Core feature)
+// ============================================
+
+enum BookingStatus {
+  PENDING     // Waiting for tutor confirmation
+  CONFIRMED   // Tutor accepted
+  COMPLETED   // Session finished
+  CANCELLED   // Either party cancelled
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  
+  // Who
+  studentId   String
+  tutorId     String
+  student     User     @relation("StudentBookings", fields: [studentId], references: [id])
+  tutor       User     @relation("TutorBookings", fields: [tutorId], references: [id])
+  
+  // What
+  subject     String   // Simple string, no separate table
+  topic       String?  
+  
+  // When
+  date        DateTime // Session date and time combined
+  duration    Int      // Minutes (30, 60, 90, etc.)
+  
+  // Where
+  location    String?  // "Online" or physical location
+  meetingUrl  String?  // Zoom/Meet link if online
+  
+  // Status
+  status      BookingStatus @default(PENDING)
+  
+  // Simple notes
+  notes       String?  
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  review      Review?
+  messages    Message[]
+
+  @@index([studentId])
+  @@index([tutorId])
+  @@index([status])
+  @@index([date])
+}
+
+// ============================================
+// REVIEWS (Simple feedback)
+// ============================================
+
+model Review {
+  id        String   @id @default(cuid())
+  
+  bookingId String   @unique
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  
+  studentId String
+  tutorId   String
+  student   User     @relation("ReviewsGiven", fields: [studentId], references: [id])
+  tutor     User     @relation("ReviewsReceived", fields: [tutorId], references: [id])
+  
+  rating    Int      // 1-5 stars
+  comment   String?  
+  
+  createdAt DateTime @default(now())
+  
+  @@index([tutorId])
+  @@index([rating])
+}
+
+// ============================================
+// MESSAGING (Simple chat per booking)
+// ============================================
+
+model Message {
+  id        String   @id @default(cuid())
+  
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  
+  content   String   
+  
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([bookingId])
+  @@index([senderId])
+  @@index([createdAt])
+}
