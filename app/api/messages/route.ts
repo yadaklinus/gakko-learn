@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
+import {prisma} from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -42,7 +42,7 @@ export async function GET() {
     });
 
     // 3. Normalize Data Structure
-    const bookingConvos = bookings.map(b => ({
+    const bookingConvos = bookings.map((b:any) => ({
       id: b.id,
       type: 'BOOKING',
       otherUser: userId === b.studentId ? b.tutor : b.student,
@@ -52,7 +52,7 @@ export async function GET() {
       contextLabel: b.subject // Extra context for bookings
     }));
 
-    const connectionConvos = connections.map(c => ({
+    const connectionConvos = connections.map((c:any) => ({
       id: c.id,
       type: 'CONNECTION',
       otherUser: userId === c.studentId ? c.tutor : c.student,
