@@ -22,13 +22,28 @@ export default function RootLayout({
         }
   return (
    <>
+      <div className="min-h-screen bg-slate-50">
+      {/* FIX 1: Change md:pl-60 to md:pl-72 
+         This matches the w-72 (288px) width of your Desktop Sidebar 
+      */}
+      <div className="md:pl-72 transition-all duration-300">
         
-        <div className="min-h-screen bg-slate-50 md:pl-64">
-            <div className="max-w-5xl mx-auto min-h-screen bg-white md:shadow-sm pb-24 md:pb-8 relative">
-              {children}
-            </div>
-        </div>
-        <Navigation />
+        {/* FIX 2: Ensure relative positioning and z-0
+           This ensures content stays behind the fixed z-50 navigation 
+        */}
+        <main className="max-w-5xl mx-auto min-h-screen bg-white md:shadow-sm relative z-0">
+          
+          {/* Content Wrapper */}
+          <div className="p-6 md:p-10 pb-32 md:pb-10">
+            {children}
+          </div>
+          
+        </main>
+      </div>
+
+      {/* Navigation is Fixed (z-50), sitting on top */}
+      <Navigation />
+    </div>
           
      </>
   );

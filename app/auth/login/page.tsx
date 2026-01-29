@@ -1,23 +1,27 @@
 "use client"
 
-import { useState, FC, FormEvent } from 'react';
+import { useState, FC, FormEvent, useEffect } from 'react';
 import { Mail, Lock, BookOpen, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// 1. Import the signIn helper
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 const LoginView: FC = () => {
   const router = useRouter();
+  const { status } = useSession(); // 1. Get session status
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
-  // Note: I removed the 'role' state. 
-  // You should rely on the database (server-side) to determine the user's role, 
-  // not what the frontend sends.
-  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 2. Check if user is logged in
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard'); // Redirect immediately
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -25,30 +29,36 @@ const LoginView: FC = () => {
     setError(null);
 
     try {
-      // 2. Use NextAuth's signIn method
       const result = await signIn('credentials', {
-        redirect: false, // We handle redirection manually to show errors on the same page
+        redirect: false,
         email,
         password,
       });
 
       if (result?.error) {
-        // Handle specific error cases if needed
         setError('Invalid email or password');
         setIsLoading(false);
         return;
       }
 
       if (result?.ok) {
-        // 3. Success: Redirect to dashboard
         router.push('/dashboard');
-        router.refresh(); // Refresh to ensure server components update with new session
+        router.refresh();
       }
     } catch (err: any) {
       setError("An unexpected error occurred");
       setIsLoading(false);
     }
   };
+
+  // 3. Show loading state while checking session to prevent "flash" of login form
+  if (status === 'loading' || status === 'authenticated') {
+    return (
+      <div className="min-h-screen flex flex-col bg-white items-center justify-center">
+        <span className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full"></span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

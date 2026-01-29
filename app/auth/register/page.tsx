@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { User as UserIcon, Mail, Building, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast'; // 1. Import Toast
+import toast from 'react-hot-toast';
+import { signIn,useSession } from 'next-auth/react'; // 1. Import signIn
 
-// Helper for conditional classes (optional but recommended)
+// Helper for conditional classes
 const inputClasses = (hasError: boolean) => `
   block w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-slate-50 
   focus:ring-4 focus:ring-indigo-50 transition-all font-medium placeholder:text-slate-400
@@ -17,6 +18,13 @@ const inputClasses = (hasError: boolean) => `
 
 export default function RegisterView() {
   const router = useRouter();
+  const { status } = useSession();
+
+   useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard'); // Redirect immediately
+    }
+  }, [status, router]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,9 +35,6 @@ export default function RegisterView() {
   });
   
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 2. New State for Field-specific errors
-  // This matches the Zod .flatten().fieldErrors structure
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -48,16 +53,17 @@ export default function RegisterView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setFieldErrors({}); // Clear previous errors
+    setFieldErrors({});
 
     // Client Validation
     if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match"); // Toast immediately
+      toast.error("Passwords do not match");
       setIsLoading(false);
       return;
     }
 
     try {
+      // 1. Register User
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,21 +78,32 @@ export default function RegisterView() {
       const data = await response.json();
 
       if (!response.ok) {
-        // 3. Handle Zod Validation Errors (Status 400)
         if (response.status === 400 && data.errors) {
           setFieldErrors(data.errors.fieldErrors);
           toast.error("Please fix the errors in the form.");
           return;
         }
-
-        // Handle General Errors (e.g., User already exists)
         toast.error(data.message || 'Registration failed');
         return;
       }
 
-      // 4. Success Logic
-      toast.success("Account created successfully!");
-      router.push('/auth/login?registered=true');
+      // 2. Auto-Login Logic (New)
+      toast.success("Account created! Logging you in...");
+      
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (result?.error) {
+        toast.error("Auto-login failed. Please log in manually.");
+        router.push('/auth/login');
+      } else {
+        // Success: Redirect to dashboard
+        router.push('/dashboard');
+        router.refresh();
+      }
 
     } catch (err) {
       toast.error("Something went wrong. Please try again.");
@@ -97,12 +114,19 @@ export default function RegisterView() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
-      {/* Visual Side (Left) - Kept mostly same as your code */}
+      {/* Visual Side (Left) */}
       <div className="hidden lg:flex lg:w-1/2 bg-indigo-600 items-center justify-center p-12 text-white relative overflow-hidden">
-        {/* ... (Your existing visual side code) ... */}
-         <div className="relative z-10 max-w-md">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full -mr-32 -mt-32 opacity-20"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400 rounded-full -ml-48 -mb-48 opacity-10"></div>
+        <div className="relative z-10 max-w-md">
            <h1 className="text-5xl font-black leading-tight mb-6">Master your courses.</h1>
            <p className="text-indigo-100 text-lg font-medium mb-10">Join thousands of students.</p>
+           <div className="space-y-4">
+             <div className="flex items-center space-x-3 bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+               <ShieldCheck className="text-emerald-400" />
+               <span className="font-bold">Verified Peer Tutors</span>
+             </div>
+           </div>
          </div>
       </div>
 
@@ -130,7 +154,6 @@ export default function RegisterView() {
                   placeholder="John Doe"
                 />
               </div>
-              {/* Display Validation Error Text */}
               {fieldErrors.name && (
                 <p className="mt-1 text-xs font-bold text-red-500 ml-1 animate-pulse">
                   {fieldErrors.name[0]}
@@ -211,7 +234,7 @@ export default function RegisterView() {
               )}
             </div>
 
-            {/* Confirm Password (Client side only) */}
+            {/* Confirm Password */}
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Confirm Password</label>
               <div className="relative">
@@ -223,7 +246,7 @@ export default function RegisterView() {
                   type="password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={inputClasses(false)} // We handle this via toast only
+                  className={inputClasses(false)}
                   placeholder="••••••••"
                 />
               </div>
@@ -237,7 +260,7 @@ export default function RegisterView() {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
-                  <span>Creating Account...</span>
+                  <span>Processing...</span>
                 </div>
               ) : (
                 <>
@@ -248,7 +271,6 @@ export default function RegisterView() {
             </button>
           </form>
 
-          {/* ... Footer Links ... */}
           <p className="mt-8 text-center text-sm text-slate-500 font-medium">
             Already have an account?{' '}
             <Link href="/auth/login" className="font-bold text-indigo-600 hover:underline">
