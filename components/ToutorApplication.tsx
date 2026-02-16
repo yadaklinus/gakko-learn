@@ -53,7 +53,7 @@ export default function TutorApplicationModal({ isOpen, onClose, onSuccess }: Pr
       // Success Logic:
       // We immediately sign the user out. This forces a session refresh (to get the new 'TUTOR' role)
       // and redirects them to the login page.
-      await signOut({ callbackUrl: '/auth/login' });
+      onSuccess()
       
     } catch (error) {
       console.error(error);

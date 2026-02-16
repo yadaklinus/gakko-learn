@@ -6,7 +6,7 @@ import TutorHomeView from "@/components/dashboards/totuor/toutorDashboard"
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const role = session?.user?.role
+  const role = session?.user?.currentRole
 
   console.log(session)
 

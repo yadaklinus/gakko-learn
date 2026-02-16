@@ -5,7 +5,7 @@ import StudentExploreView from "@/components/dashboards/student/studentExplore"
 import TutorExploreView from "@/components/dashboards/totuor/toutorExplore"
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const role = session?.user?.role
+  const role = session?.user?.currentRole
 
   // Show loading state
   // if (!session) {

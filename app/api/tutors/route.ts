@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     // 1. Fetch Tutors
     const tutorsData = await prisma.user.findMany({
       where: {
-        role: { in: ["TUTOR", "BOTH"] },
+        role: { in: ["BOTH"] },
         
         // FIX: Only apply NOT filter if session.user.id exists
         ...(session?.user?.id ? { NOT: { id: session.user.id } } : {}),

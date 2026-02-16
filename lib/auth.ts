@@ -7,10 +7,10 @@ import bcrypt from "bcryptjs";
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
-    signIn: "/login",
+    signIn: "/auth/login",
   },
   providers: [
     CredentialsProvider({
@@ -28,9 +28,13 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
+        
+
         if (!user || !user.password) {
           return null;
         }
+
+        
 
         const isValid = await bcrypt.compare(
           credentials.password,
@@ -47,26 +51,32 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
+          currentRole: user.currentRole,
         };
       },
     }),
   ],
   cookies: {
     sessionToken: {
-      name: `next-auth.gakko-learn`,
+      name: `next-auth.academia-tauri`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Changed for local Tauri environment
       },
     },
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user,trigger,session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.currentRole = user.currentRole;
+      }
+      if(trigger == "update" && session){
+        token.currentRole = session.currentRole,
+        token.role = session.role
       }
       return token;
     },
@@ -74,6 +84,7 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.currentRole = token.currentRole as string;
       }
       return session;
     },

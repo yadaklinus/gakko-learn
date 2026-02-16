@@ -5,7 +5,7 @@ import StudentMessagesView from "@/components/dashboards/student/studentMessage"
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const role = session?.user?.role
+  const role = session?.user?.currentRole
 
   // Show loading state
   // if (!session) {

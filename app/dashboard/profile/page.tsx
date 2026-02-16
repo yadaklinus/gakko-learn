@@ -1,11 +1,17 @@
 "use client"
 import React, { useState, useEffect, useCallback } from 'react';
 import { signOut, useSession } from 'next-auth/react';
-import { Settings, ChevronRight, LogOut, Shield, CreditCard, Award, HelpCircle, Edit3, Globe, Save, X } from 'lucide-react';
+import { Settings, ChevronRight, LogOut, Shield, CreditCard, Award, HelpCircle, Edit3, Globe, Save, X, Repeat } from 'lucide-react';
 import TutorApplicationModal from '@/components/ToutorApplication';
 
 // Enum matches Prisma
 enum UserRole {
+  STUDENT = "STUDENT",
+  TUTOR = "TUTOR",
+  BOTH = "BOTH"
+}
+
+enum CurrentUserRole {
   STUDENT = "STUDENT",
   TUTOR = "TUTOR",
   BOTH = "BOTH"
@@ -17,6 +23,7 @@ interface UserProfile {
   email: string;
   image: string | null;
   role: UserRole;
+  currentRole:CurrentUserRole;
   institution: string | null;
   major: string | null;
   bio: string | null;
@@ -28,24 +35,23 @@ export default function ProfileView() {
   const { data: session, update: updateSession } = useSession();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
   // Widget State
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
-
+  console.log(session)
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<UserProfile>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isSwitchingRole, setIsSwitchingRole] = useState(false);
 
   // Fetch Logic
   const fetchProfile = useCallback(async () => {
     if (!session?.user?.email) return;
     try {
-      // We can use a GET endpoint, or just reload the session if your strategy allows. 
-      // Assuming you have a GET /api/users/me endpoint from your prompt
       const res = await fetch('/api/users/me'); 
       if (res.ok) {
         const data = await res.json();
+        console.log(data)
         const userData = data.user || data;
         setUser(userData);
         setFormData(userData);
@@ -74,8 +80,7 @@ export default function ProfileView() {
         const data = await res.json();
         setUser(data.user);
         setIsEditing(false);
-        // Force session update to reflect changes in UI elsewhere if needed
-        updateSession(); 
+        updateSession({ role: data.user.role }); 
       }
     } catch (error) {
       console.error("Failed to update", error);
@@ -85,12 +90,54 @@ export default function ProfileView() {
     }
   };
 
-  const handleApplicationSuccess = async () => {
-    // 1. Refresh local user data
-    await fetchProfile();
-    // 2. Trigger session update so the middleware/navbar knows the role changed
-    await updateSession();
+  const handleRoleSwitch = async () => {
+    if (!user) return;
+    setIsSwitchingRole(true);
+
+    // Determine target role
+    const targetRole = session?.user?.currentRole === "TUTOR" ? "STUDENT" : "TUTOR";
+
+    try {
+      // 1. Update Backend
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentRole: targetRole })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        
+        // 2. Update Local State
+        console.log(data)
+        setUser(data.user);
+
+        console.log(targetRole)
+        
+        // 3. Update Session (Important for middleware/nav)
+        await updateSession({role:"BOTH", currentRole: targetRole });
+      }
+    } catch (error) {
+      console.error("Failed to switch role", error);
+      alert("Failed to switch role. Please try again.");
+    } finally {
+      setIsSwitchingRole(false);
+    }
   };
+
+  const handleApplicationSuccess = async () => {
+    await fetchProfile();
+    await updateSession({role:"BOTH",currentRole:"TUTOR"});
+  };
+  const test = async () => {
+    
+    await updateSession({role:"BOTH",currentRole:"TUTOR"});
+  };
+
+  
+
+  
+
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen"><div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div></div>;
@@ -108,6 +155,7 @@ export default function ProfileView() {
   return (
     <div className="animate-in fade-in duration-500 pb-24">
       {/* HEADER */}
+      
       <div className="bg-indigo-600 pt-12 pb-8 px-5 rounded-b-[40px] shadow-lg relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] w-40 h-40 bg-indigo-500 rounded-full opacity-20"></div>
         <div className="absolute bottom-[-50px] left-[-30px] w-60 h-60 bg-indigo-400 rounded-full opacity-10"></div>
@@ -135,7 +183,7 @@ export default function ProfileView() {
             </p>
             <div className="flex items-center mt-1 space-x-2">
               <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-medium uppercase tracking-wider">
-                {user.role}
+                {session?.user?.currentRole}
               </span>
             </div>
           </div>
@@ -198,21 +246,51 @@ export default function ProfileView() {
           </div>
         )}
 
-        {/* BECOME A TUTOR CTA */}
+        {/* ROLE SWITCH BUTTON */}
+        {session?.user.role == "BOTH" && 
+          <button
+          onClick={handleRoleSwitch}
+          disabled={isSwitchingRole}
+          className="w-full bg-white border border-indigo-100 p-4 rounded-3xl shadow-sm mb-6 flex items-center justify-between group hover:border-indigo-300 transition-all"
+        >
+          <div className="flex items-center space-x-4">
+            <div className={`p-3 rounded-2xl ${user.role === UserRole.TUTOR ? 'bg-orange-50 text-orange-600' : 'bg-indigo-50 text-indigo-600'}`}>
+              <Repeat size={24} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-slate-900 text-sm">
+                Switch to {session?.user?.currentRole === "TUTOR" ? "STUDENT" : "TUTOR"} View
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {user.role === UserRole.TUTOR 
+                  ? 'View marketplace as a student' 
+                  : 'Manage your tutor profile'}
+              </p>
+            </div>
+          </div>
+          {isSwitchingRole ? (
+             <div className="h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <ChevronRight size={18} className="text-slate-300 group-hover:text-indigo-400" />
+          )}
+        </button>
+        }
+
+        {/* BECOME A TUTOR CTA (Only show if Student AND they haven't applied yet - logical check can be expanded) */}
         {user.role === UserRole.STUDENT && (
-          <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-md mb-8 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-3xl shadow-md mb-8 flex items-center justify-between text-white">
             <div className="flex items-center space-x-4">
-              <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600">
-                <Globe size={24} />
+              <div className="bg-white/20 p-3 rounded-2xl">
+                <Globe size={24} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">Become a Tutor</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Share knowledge and earn.</p>
+                <h3 className="font-bold text-sm">New Application?</h3>
+                <p className="text-xs text-indigo-100 mt-0.5">Apply to become a tutor.</p>
               </div>
             </div>
             <button 
               onClick={() => setIsApplicationOpen(true)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform"
+              className="bg-white text-indigo-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform"
             >
               Apply
             </button>
@@ -220,7 +298,7 @@ export default function ProfileView() {
         )}
 
         {/* TUTOR STATS (Show if they are a tutor) */}
-        {user.role !== UserRole.STUDENT && (
+        {session?.user?.currentRole === "TUTOR" && (
            <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
                  <p className="text-xs text-slate-400 font-bold uppercase mb-1">Hourly Rate</p>
@@ -259,7 +337,7 @@ export default function ProfileView() {
 
         {/* LOG OUT */}
         <button 
-          onClick={() => signOut({ callbackUrl: '/auth/login' })}
+          onClick={() => signOut({callbackUrl:"/auth/login"})}
           className="w-full flex items-center justify-center space-x-2 text-rose-500 font-bold text-sm py-4 border-2 border-slate-100 rounded-3xl mb-8 active:bg-rose-50 transition-colors bg-white"
         >
           <LogOut size={18} />

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth'; 
 import {prisma} from '@/lib/prisma';
 
+
 // GET: Fetch User Profile + Dashboard Stats
 export async function GET() {
   try {
@@ -27,6 +28,7 @@ export async function GET() {
         bio: true,
         hourlyRate: true,
         subjects: true,
+        currentRole:true,
         rating: true,
         totalReviews: true, // Useful for profile badges
 
@@ -90,6 +92,7 @@ export async function PATCH(req: Request) {
         institution: body.institution,
         major: body.major,
         bio: body.bio,
+        
         // Convert hourlyRate to float if it exists, otherwise undefined
         hourlyRate: body.hourlyRate ? parseFloat(body.hourlyRate) : undefined,
         subjects: body.subjects, 
@@ -103,6 +106,7 @@ export async function PATCH(req: Request) {
         email: true,
         image: true,
         role: true,
+        currentRole:true,
         institution: true,
         major: true,
         bio: true,

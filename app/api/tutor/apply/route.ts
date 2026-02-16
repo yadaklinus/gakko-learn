@@ -37,7 +37,8 @@ export async function POST(req: Request) {
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        role: "TUTOR", // Or "BOTH" depending on your logic
+        role: "BOTH", // Or "BOTH" depending on your logic
+        currentRole:"TUTOR",
         major,
         // Join array to string for storage (e.g., "Math,Physics")
         subjects: subjects.join(','), 
