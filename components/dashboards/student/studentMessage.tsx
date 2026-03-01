@@ -23,17 +23,17 @@ interface Message {
 
 const MessagesView: React.FC = () => {
   const { data: session } = useSession();
-  
+
   // Views
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeChat, setActiveChat] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  
+
   // Inputs & Loading
   const [isLoadingInbox, setIsLoadingInbox] = useState(true);
   const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [inputText, setInputText] = useState('');
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 1. Load Inbox
@@ -75,9 +75,9 @@ const MessagesView: React.FC = () => {
     };
 
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000); 
+    const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
-    
+
   }, [activeChat]);
 
   // 3. Auto-scroll
@@ -91,10 +91,10 @@ const MessagesView: React.FC = () => {
 
     const tempId = Date.now().toString();
     const optimisticMessage: Message = {
-        id: tempId,
-        content: inputText,
-        senderId: session.user.id,
-        createdAt: new Date().toISOString()
+      id: tempId,
+      content: inputText,
+      senderId: session.user.id,
+      createdAt: new Date().toISOString()
     };
 
     // Optimistic Update
@@ -102,18 +102,18 @@ const MessagesView: React.FC = () => {
     setInputText('');
 
     try {
-        await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: activeChat.id,
-                type: activeChat.type,
-                content: optimisticMessage.content
-            })
-        });
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: activeChat.id,
+          type: activeChat.type,
+          content: optimisticMessage.content
+        })
+      });
     } catch (error) {
-        console.error("Failed to send", error);
-        setMessages(prev => prev.filter(m => m.id !== tempId)); // Rollback
+      console.error("Failed to send", error);
+      setMessages(prev => prev.filter(m => m.id !== tempId)); // Rollback
     }
   };
 
@@ -131,16 +131,16 @@ const MessagesView: React.FC = () => {
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
             <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 relative">
-               <img 
-                 src={activeChat.otherUser.image || `https://ui-avatars.com/api/?name=${activeChat.otherUser.name}`} 
-                 alt="User" 
-                 className="w-full h-full object-cover"
-               />
+              <img
+                src={activeChat.otherUser.image || `https://ui-avatars.com/api/?name=${activeChat.otherUser.name}`}
+                alt="User"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h3 className="font-bold text-slate-900 leading-tight">{activeChat.otherUser.name}</h3>
-              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider flex items-center">
-                {activeChat.type === 'BOOKING' ? <BookOpen size={10} className="mr-1"/> : <Users size={10} className="mr-1"/>}
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center">
+                {activeChat.type === 'BOOKING' ? <BookOpen size={12} className="mr-1 text-indigo-500" /> : <Users size={12} className="mr-1 text-emerald-500" />}
                 {activeChat.contextLabel}
               </p>
             </div>
@@ -150,40 +150,41 @@ const MessagesView: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
           {isLoadingChat && (
-              <div className="flex justify-center mt-10"><span className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full"></span></div>
+            <div className="flex justify-center mt-10"><span className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full"></span></div>
           )}
-          
+
           {messages.map((msg) => {
-             const isMe = msg.senderId === session?.user?.id;
-             return (
-                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${
-                        isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
-                    }`}>
-                        <p className="text-sm">{msg.content}</p>
-                        <span className={`text-[10px] block mt-1 text-right ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
-                            {formatTime(msg.createdAt)}
-                        </span>
-                    </div>
+            const isMe = msg.senderId === session?.user?.id;
+            return (
+              <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[75%] md:max-w-[60%] p-3.5 rounded-2xl shadow-md transition-all ${isMe
+                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-indigo-200/50'
+                    : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm shadow-slate-200/50'
+                  }`}>
+                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <span className={`text-[10px] block mt-1.5 text-right font-medium ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
+                    {formatTime(msg.createdAt)}
+                  </span>
                 </div>
-             );
+              </div>
+            );
           })}
           <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 bg-white border-t border-slate-200 fixed bottom-20 md:bottom-0 left-0 w-full md:static">
-          <div className="flex items-center space-x-3 bg-slate-100 rounded-2xl p-2 pr-4">
-            <button className="p-2 text-slate-400 hover:text-indigo-600"><Paperclip size={20} /></button>
+          <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 hover:border-indigo-300 transition-colors rounded-3xl p-2 pr-2 shadow-inner">
+            <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-all"><Paperclip size={20} /></button>
             <input
               type="text"
-              className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 focus:outline-none"
+              className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 focus:outline-none placeholder:text-slate-400"
               placeholder="Type your message..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             />
-            <button onClick={handleSend} disabled={!inputText.trim()} className="bg-indigo-600 text-white p-2 rounded-xl shadow-md disabled:opacity-50">
-              <Send size={18} />
+            <button onClick={handleSend} disabled={!inputText.trim()} className="bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg text-white p-2.5 rounded-2xl shadow-indigo-200/50 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center">
+              <Send size={18} className="translate-x-[1px] -translate-y-[1px]" />
             </button>
           </div>
         </div>
@@ -203,24 +204,24 @@ const MessagesView: React.FC = () => {
         {isLoadingInbox && <div className="text-center py-10"><span className="animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full inline-block"></span></div>}
 
         {!isLoadingInbox && conversations.length === 0 && (
-            <p className="text-slate-400 text-center mt-10">No messages yet. Connect with a tutor or book a session!</p>
+          <p className="text-slate-400 text-center mt-10">No messages yet. Connect with a tutor or book a session!</p>
         )}
 
         {conversations.map((chat) => (
           <div
             key={chat.id}
             onClick={() => setActiveChat(chat)}
-            className="bg-white border border-slate-200 p-4 rounded-3xl flex items-center space-x-4 cursor-pointer hover:border-indigo-200 transition-colors shadow-sm"
+            className="bg-white border border-slate-100 p-4 rounded-3xl flex items-center space-x-4 cursor-pointer hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-0.5 transition-all w-full"
           >
             <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-100 flex-shrink-0 bg-slate-200 relative">
-               <img 
-                 src={chat.otherUser.image || `https://ui-avatars.com/api/?name=${chat.otherUser.name}`} 
-                 alt={chat.otherUser.name} 
-                 className="object-cover w-full h-full" 
-               />
-               <div className="absolute bottom-0 right-0 p-1 bg-white rounded-full">
-                  {chat.type === 'BOOKING' ? <BookOpen size={10} className="text-indigo-600"/> : <Users size={10} className="text-emerald-500"/>}
-               </div>
+              <img
+                src={chat.otherUser.image || `https://ui-avatars.com/api/?name=${chat.otherUser.name}`}
+                alt={chat.otherUser.name}
+                className="object-cover w-full h-full"
+              />
+              <div className="absolute bottom-0 right-0 p-1 bg-white rounded-full">
+                {chat.type === 'BOOKING' ? <BookOpen size={10} className="text-indigo-600" /> : <Users size={10} className="text-emerald-500" />}
+              </div>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center mb-1">
@@ -228,10 +229,12 @@ const MessagesView: React.FC = () => {
                 <span className="text-[10px] text-slate-400 font-medium">{new Date(chat.lastMessageTime).toLocaleDateString()}</span>
               </div>
               <p className={`text-xs truncate ${chat.isUnread ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
-                 {chat.lastMessage}
+                {chat.lastMessage}
               </p>
             </div>
-            {chat.isUnread && <div className="w-3 h-3 bg-indigo-600 rounded-full"></div>}
+            {chat.isUnread && (
+              <div className="w-3 h-3 bg-indigo-600 rounded-full shadow-sm shadow-indigo-200 animate-pulse"></div>
+            )}
           </div>
         ))}
       </div>

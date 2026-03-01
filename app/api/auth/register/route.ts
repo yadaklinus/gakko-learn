@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 // import  prisma  from '@/lib/prisma';
-import  {prisma}  from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
@@ -9,7 +9,7 @@ import { z } from 'zod';
 const registerSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email address"),
-  institution: z.string().min(2, "Institution is required"),
+  course: z.string().min(2, "Course is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-   
+
 
     // 1. Validate Input
     const result = registerSchema.safeParse(body);
@@ -31,9 +31,9 @@ export async function POST(req: Request) {
 
 
 
-    const { name, email, institution, password } = result.data;
+    const { name, email, course, password } = result.data;
 
-    
+
 
     // 2. Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
       data: {
         name,
         email,
-        institution,
+        institution: course,
         password: hashedPassword,
         role: "STUDENT", // Default role
       },
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     // 5. Return success (exclude password from response)
     const { password: _, ...userWithoutPassword } = user;
 
-   
+
 
     return NextResponse.json(
       { message: "User created successfully", user: userWithoutPassword },

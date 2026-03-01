@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User as UserIcon, Mail, Building, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { signIn,useSession } from 'next-auth/react'; // 1. Import signIn
+import { signIn, useSession } from 'next-auth/react'; // 1. Import signIn
 
 // Helper for conditional classes
 const inputClasses = (hasError: boolean) => `
   block w-full pl-12 pr-4 py-4 border-2 rounded-2xl bg-slate-50 
   focus:ring-4 focus:ring-indigo-50 transition-all font-medium placeholder:text-slate-400
-  ${hasError 
-    ? 'border-red-300 focus:border-red-500 text-red-900' 
+  ${hasError
+    ? 'border-red-300 focus:border-red-500 text-red-900'
     : 'border-slate-100 focus:border-indigo-500 text-slate-900'}
 `;
 
@@ -20,26 +20,26 @@ export default function RegisterView() {
   const router = useRouter();
   const { status } = useSession();
 
-   useEffect(() => {
+  useEffect(() => {
     if (status === 'authenticated') {
       router.replace('/dashboard'); // Redirect immediately
     }
   }, [status, router]);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    institution: '',
+    course: '',
     password: '',
     confirmPassword: ''
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    
+
     // Clear error for this specific field when user types
     if (fieldErrors[e.target.name]) {
       setFieldErrors(prev => {
@@ -70,7 +70,7 @@ export default function RegisterView() {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          institution: formData.institution,
+          course: formData.course,
           password: formData.password
         }),
       });
@@ -89,7 +89,7 @@ export default function RegisterView() {
 
       // 2. Auto-Login Logic (New)
       toast.success("Account created! Logging you in...");
-      
+
       const result = await signIn('credentials', {
         redirect: false,
         email: formData.email,
@@ -119,15 +119,15 @@ export default function RegisterView() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full -mr-32 -mt-32 opacity-20"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400 rounded-full -ml-48 -mb-48 opacity-10"></div>
         <div className="relative z-10 max-w-md">
-           <h1 className="text-5xl font-black leading-tight mb-6">Master your courses.</h1>
-           <p className="text-indigo-100 text-lg font-medium mb-10">Join thousands of students.</p>
-           <div className="space-y-4">
-             <div className="flex items-center space-x-3 bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-               <ShieldCheck className="text-emerald-400" />
-               <span className="font-bold">Verified Peer Tutors</span>
-             </div>
-           </div>
-         </div>
+          <h1 className="text-5xl font-black leading-tight mb-6">Federal University Wukari.</h1>
+          <p className="text-indigo-100 text-lg font-medium mb-10">Faculty of Computing and Information Systems.</p>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+              <ShieldCheck className="text-emerald-400" />
+              <span className="font-bold">Verified Peer Tutors</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Form Side (Right) */}
@@ -137,7 +137,7 @@ export default function RegisterView() {
           <p className="mt-2 text-sm text-slate-500 font-medium">Join the student community today.</p>
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-            
+
             {/* Name Input */}
             <div>
               <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Full Name</label>
@@ -184,29 +184,29 @@ export default function RegisterView() {
               )}
             </div>
 
-            {/* Institution Select */}
+            {/* Course Select */}
             <div>
-              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Institution</label>
+              <label className="block text-xs font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Course</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Building size={18} className={fieldErrors.institution ? "text-red-400" : "text-slate-400"} />
+                  <Building size={18} className={fieldErrors.course ? "text-red-400" : "text-slate-400"} />
                 </div>
                 <select
-                  name="institution"
-                  value={formData.institution}
+                  name="course"
+                  value={formData.course}
                   onChange={handleChange}
-                  className={inputClasses(!!fieldErrors.institution)}
+                  className={inputClasses(!!fieldErrors.course)}
                 >
-                  <option value="">Select University</option>
-                  <option value="University of Lagos">University of Lagos (Unilag)</option>
-                  <option value="University of Ibadan">University of Ibadan (UI)</option>
-                  <option value="Obafemi Awolowo University">Obafemi Awolowo University (OAU)</option>
-                  <option value="Covenant University">Covenant University</option>
+                  <option value="">Select Course</option>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Cyber Security Science">Cyber Security Science</option>
+                  <option value="Software Engineering">Software Engineering</option>
+                  <option value="Information System">Information System</option>
                 </select>
               </div>
-              {fieldErrors.institution && (
+              {fieldErrors.course && (
                 <p className="mt-1 text-xs font-bold text-red-500 ml-1 animate-pulse">
-                  {fieldErrors.institution[0]}
+                  {fieldErrors.course[0]}
                 </p>
               )}
             </div>
