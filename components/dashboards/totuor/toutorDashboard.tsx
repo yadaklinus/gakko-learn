@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Wallet, Star, BrainCircuit, X, Sparkles, Mic, Calendar, CheckCircle2, XCircle, Clock, Users, ArrowRight } from 'lucide-react';
+import { Bell, Wallet, Star, BrainCircuit, X, Sparkles, Mic, Calendar, CheckCircle2, XCircle, Clock, Users, ArrowRight, Banknote } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { LiveAssistant } from '@/components/LiveAssistant';
 import TutorStudentsView from './toutorStudents';
@@ -44,6 +45,7 @@ interface TutorDashboardData {
 }
 
 const TutorHomeView: React.FC = () => {
+  const router = useRouter();
   const { data: session } = useSession();
   const [view, setView] = useState<'HOME' | 'STUDENTS'>('HOME');
   const [dashboardData, setDashboardData] = useState<TutorDashboardData | null>(null);
@@ -194,12 +196,12 @@ const TutorHomeView: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-[32px] text-white shadow-xl shadow-slate-200/50 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-              <Wallet size={60} />
+              <Banknote size={60} />
             </div>
-            <Wallet className="mb-4 text-emerald-400 relative z-10" size={24} />
-            <p className="text-xs font-medium opacity-60 uppercase tracking-widest relative z-10">Total Earnings</p>
+            <Banknote className="mb-4 text-emerald-400 relative z-10" size={24} />
+            <p className="text-xs font-medium opacity-60 uppercase tracking-widest relative z-10">Hourly Rate</p>
             <p className="text-3xl font-black mt-1 relative z-10">
-              {isLoading ? '-' : `₦${dashboardData?.totalEarnings.toLocaleString()}`}
+              {isLoading ? '-' : `₦${(dashboardData?.hourlyRate || 0).toLocaleString()}`}
             </p>
           </div>
           <div className="bg-white border border-slate-100 p-6 rounded-[32px] text-slate-900 shadow-sm hover:shadow-lg transition-all group">
@@ -323,7 +325,12 @@ const TutorHomeView: React.FC = () => {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-slate-900">Upcoming Sessions</h2>
-              <button className="text-indigo-600 text-sm font-bold hover:underline">Full Schedule</button>
+              <button
+                onClick={() => router.push('/dashboard/schedule')}
+                className="text-indigo-600 text-sm font-bold hover:underline"
+              >
+                Full Schedule
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -373,11 +380,7 @@ const TutorHomeView: React.FC = () => {
         <section className="space-y-8">
           <div>
             <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <button className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all text-left group">
-                <Clock className="text-slate-400 mb-2 group-hover:text-indigo-600" size={24} />
-                <p className="text-xs font-bold text-slate-700">Update Availability</p>
-              </button>
+            <div className="grid grid-cols-1 gap-3">
               <button
                 onClick={() => setView('STUDENTS')}
                 className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all text-left group"
