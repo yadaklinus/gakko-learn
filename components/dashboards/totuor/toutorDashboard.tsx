@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Wallet, Star, BrainCircuit, X, Sparkles, Mic, Calendar, CheckCircle2, XCircle, Clock, Users } from 'lucide-react';
+import { Bell, Wallet, Star, BrainCircuit, X, Sparkles, Mic, Calendar, CheckCircle2, XCircle, Clock, Users, ArrowRight } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { LiveAssistant } from '@/components/LiveAssistant';
+import TutorStudentsView from './toutorStudents';
 import toast from 'react-hot-toast';
 
 // ==========================================
@@ -13,6 +14,7 @@ interface TutorDashboardData {
   hourlyRate: number;
   rating: number;
   totalEarnings: number; // Calculated field
+  totalReviews: number;
   pendingRequests: Array<{
     id: string;
     subject: string;
@@ -20,9 +22,12 @@ interface TutorDashboardData {
     date: string;
     duration: number;
     student: {
+      id: string;
       name: string;
       image: string | null;
       institution: string | null;
+      bio?: string | null;
+      major?: string | null;
     };
   }>;
   upcomingSessions: Array<{
@@ -40,6 +45,7 @@ interface TutorDashboardData {
 
 const TutorHomeView: React.FC = () => {
   const { data: session } = useSession();
+  const [view, setView] = useState<'HOME' | 'STUDENTS'>('HOME');
   const [dashboardData, setDashboardData] = useState<TutorDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,6 +54,9 @@ const TutorHomeView: React.FC = () => {
   const [lessonPlan, setLessonPlan] = useState<string | null>(null);
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [processingBookingId, setProcessingBookingId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<TutorDashboardData['pendingRequests'][0]['student'] | null>(null);
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
+  const [activeBookingId, setActiveBookingId] = useState<string | null>(null);
 
   // ==========================================
   // 2. DATA FETCHING
@@ -71,6 +80,7 @@ const TutorHomeView: React.FC = () => {
             hourlyRate: userData.hourlyRate || 0,
             rating: userData.rating || 5.0,
             totalEarnings: 45000, // Mock calculation or fetch real sum from completed bookings
+            totalReviews: userData.totalReviews || 0,
             pendingRequests: allBookings.filter((b: any) => b.status === 'PENDING'),
             upcomingSessions: allBookings.filter((b: any) => b.status === 'CONFIRMED'),
           });
@@ -137,6 +147,7 @@ const TutorHomeView: React.FC = () => {
       toast.error("Network error");
     } finally {
       setProcessingBookingId(null);
+      setStudentModalOpen(false);
     }
   };
 
@@ -152,6 +163,10 @@ const TutorHomeView: React.FC = () => {
   };
 
   const firstName = session?.user?.name?.split(' ')[0] || 'Tutor';
+
+  if (view === 'STUDENTS') {
+    return <TutorStudentsView onBack={() => setView('HOME')} />;
+  }
 
   return (
     <div className="p-6 md:p-10 animate-in fade-in duration-500 relative pb-32">
@@ -192,7 +207,9 @@ const TutorHomeView: React.FC = () => {
               <div className="bg-amber-50 p-2 rounded-xl group-hover:scale-110 transition-transform">
                 <Star className="text-amber-500" size={20} fill="currentColor" />
               </div>
-              <span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded-lg">Top 5%</span>
+              <span className="text-xs font-bold bg-slate-100 px-2 py-1 rounded-lg">
+                {dashboardData?.totalReviews || 0} Reviews
+              </span>
             </div>
             <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">Tutor Rating</p>
             <p className="text-3xl font-black mt-1">
@@ -259,12 +276,19 @@ const TutorHomeView: React.FC = () => {
               <div className="space-y-3">
                 {dashboardData.pendingRequests.map((req) => (
                   <div key={req.id} className="bg-white border-l-4 border-amber-400 p-5 rounded-r-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-in slide-in-from-left-4 duration-300">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
+                    <div
+                      className="flex items-center space-x-4 cursor-pointer group/student"
+                      onClick={() => {
+                        setSelectedStudent(req.student);
+                        setActiveBookingId(req.id);
+                        setStudentModalOpen(true);
+                      }}
+                    >
+                      <div className="w-12 h-12 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner group-hover/student:border-indigo-400 transition-colors">
                         <img src={req.student.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(req.student.name)}&background=random`} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-slate-900 text-lg leading-none mb-1">{req.student.name}</h4>
+                        <h4 className="font-bold text-slate-900 text-lg leading-none mb-1 group-hover/student:text-indigo-600 transition-colors">{req.student.name}</h4>
                         <p className="text-xs text-slate-500 font-medium">Requested: <span className="text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded-md">{req.subject}</span></p>
                       </div>
                     </div>
@@ -354,9 +378,16 @@ const TutorHomeView: React.FC = () => {
                 <Clock className="text-slate-400 mb-2 group-hover:text-indigo-600" size={24} />
                 <p className="text-xs font-bold text-slate-700">Update Availability</p>
               </button>
-              <button className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all text-left group">
-                <Users className="text-slate-400 mb-2 group-hover:text-emerald-600" size={24} />
+              <button
+                onClick={() => setView('STUDENTS')}
+                className="p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all text-left group"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <Users className="text-slate-400 group-hover:text-emerald-600 transition-colors" size={24} />
+                  <ArrowRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </div>
                 <p className="text-xs font-bold text-slate-700">My Students</p>
+                <p className="text-[10px] text-slate-400 font-medium">View all connections</p>
               </button>
             </div>
           </div>
@@ -390,6 +421,85 @@ const TutorHomeView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button className="flex-1 py-4 border-2 border-slate-100 rounded-2xl font-bold text-slate-600 hover:bg-slate-50">Save Draft</button>
               <button onClick={() => setLessonPlan(null)} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700">Use Plan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Profile Modal */}
+      {studentModalOpen && selectedStudent && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-[40px] overflow-hidden shadow-2xl relative animate-in zoom-in duration-300">
+            {/* Header with Background */}
+            <div className="h-32 bg-gradient-to-r from-indigo-600 to-slate-900 relative">
+              <button
+                onClick={() => setStudentModalOpen(false)}
+                className="absolute top-4 right-4 p-2 bg-white/20 hover:bg-white/30 rounded-full text-white backdrop-blur-md transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Avatar - Centered and overlapping */}
+            <div className="flex justify-center -mt-16 relative z-10">
+              <div className="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-slate-100">
+                <img
+                  src={selectedStudent.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.name)}&background=random`}
+                  alt={selectedStudent.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 text-center">
+              <h3 className="text-2xl font-black text-slate-900">{selectedStudent.name}</h3>
+              <p className="text-indigo-600 font-bold text-sm uppercase tracking-widest mt-1">Student</p>
+
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Institution</p>
+                  <p className="text-xs font-bold text-slate-800 truncate">{selectedStudent.institution || 'N/A'}</p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Major</p>
+                  <p className="text-xs font-bold text-slate-800 truncate">{selectedStudent.major || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 text-left">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 px-2">About Student</p>
+                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 max-h-32 overflow-y-auto">
+                  <p className="text-sm text-slate-600 leading-relaxed italic">
+                    {selectedStudent.bio || "No bio provided by the student."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => activeBookingId && handleBookingAction(activeBookingId, 'CANCEL')}
+                  disabled={!!processingBookingId}
+                  className="flex-1 py-4 border-2 border-slate-100 rounded-2xl font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 transition-all disabled:opacity-50"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={() => activeBookingId && handleBookingAction(activeBookingId, 'CONFIRM')}
+                  disabled={!!processingBookingId}
+                  className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-emerald-600 shadow-lg active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
+                >
+                  {processingBookingId === activeBookingId ? (
+                    <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} className="mr-2" />
+                      <span>Accept</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

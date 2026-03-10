@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -13,11 +13,16 @@ export async function GET() {
     // 1. Fetch Booking Conversations
     const bookings = await prisma.booking.findMany({
       where: {
-        OR: [{ studentId: userId }, { tutorId: userId }]
+        OR: [
+          { studentId: userId },
+          { tutorId: userId },
+          { groupStudents: { some: { id: userId } } }
+        ]
       },
       include: {
         student: { select: { id: true, name: true, image: true } },
         tutor: { select: { id: true, name: true, image: true } },
+        groupStudents: { select: { id: true, name: true, image: true } },
         messages: {
           orderBy: { createdAt: 'desc' },
           take: 1
@@ -42,20 +47,31 @@ export async function GET() {
     });
 
     // 3. Normalize Data Structure
-    const bookingConvos = bookings.map((b:any) => ({
-      id: b.id,
-      type: 'BOOKING',
-      otherUser: userId === b.studentId ? b.tutor : b.student,
-      lastMessage: b.messages[0]?.content || 'Session Chat',
-      lastMessageTime: b.messages[0]?.createdAt || b.createdAt,
-      isUnread: b.messages[0] ? (!b.messages[0].isRead && b.messages[0].senderId !== userId) : false,
-      contextLabel: b.subject // Extra context for bookings
-    }));
+    const bookingConvos = bookings.map((b: any) => {
+      const isGroup = b.isGroup;
+      const otherUser = isGroup
+        ? null
+        : (userId === b.studentId ? b.tutor : b.student);
 
-    const connectionConvos = connections.map((c:any) => ({
+      return {
+        id: b.id,
+        type: 'BOOKING',
+        isGroup,
+        otherUser: otherUser,
+        participants: b.groupStudents || [],
+        lastMessage: b.messages[0]?.content || (isGroup ? 'Group Session Chat' : 'Session Chat'),
+        lastMessageTime: b.messages[0]?.createdAt || b.createdAt,
+        isUnread: b.messages[0] ? (!b.messages[0].isRead && b.messages[0].senderId !== userId) : false,
+        contextLabel: b.subject
+      };
+    });
+
+    const connectionConvos = connections.map((c: any) => ({
       id: c.id,
       type: 'CONNECTION',
+      isGroup: false,
       otherUser: userId === c.studentId ? c.tutor : c.student,
+      participants: [],
       lastMessage: c.messages[0]?.content || 'Start a conversation',
       lastMessageTime: c.messages[0]?.createdAt || c.updatedAt,
       isUnread: c.messages[0] ? (!c.messages[0].isRead && c.messages[0].senderId !== userId) : false,
@@ -63,7 +79,7 @@ export async function GET() {
     }));
 
     // 4. Merge and Sort by Date (Newest first)
-    const allConversations = [...bookingConvos, ...connectionConvos].sort((a, b) => 
+    const allConversations = [...bookingConvos, ...connectionConvos].sort((a, b) =>
       new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
     );
 
@@ -91,20 +107,20 @@ export async function POST(req: Request) {
 
     // Dynamically link based on type
     if (type === 'BOOKING') {
-        messageData.bookingId = id;
+      messageData.bookingId = id;
     } else {
-        messageData.connectionId = id;
+      messageData.connectionId = id;
     }
 
     const message = await prisma.message.create({
       data: messageData
     });
-    
+
     // Update timestamp on parent
     if (type === 'BOOKING') {
-       await prisma.booking.update({ where: { id }, data: { updatedAt: new Date() } });
+      await prisma.booking.update({ where: { id }, data: { updatedAt: new Date() } });
     } else {
-       await prisma.connection.update({ where: { id }, data: { updatedAt: new Date() } });
+      await prisma.connection.update({ where: { id }, data: { updatedAt: new Date() } });
     }
 
     return NextResponse.json({ message });

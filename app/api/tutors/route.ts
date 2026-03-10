@@ -1,26 +1,26 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/lib/auth';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
-    
+
     // 1. Fetch Tutors
     const tutorsData = await prisma.user.findMany({
       where: {
         role: { in: ["BOTH"] },
-        
+
         // FIX: Only apply NOT filter if session.user.id exists
         ...(session?.user?.id ? { NOT: { id: session.user.id } } : {}),
 
         OR: search ? [
           { name: { contains: search } },
           { major: { contains: search } },
-          { subjects: { contains: search } }, 
+          { subjects: { contains: search } },
         ] : undefined
       },
       select: {
@@ -34,15 +34,18 @@ export async function GET(req: Request) {
         subjects: true,
         rating: true,
         totalReviews: true,
-        // 2. Check connection status ONLY if user is logged in
-        // We check if there is a connection where I am the student and THEY are the tutor
         connectionsAsTutor: session?.user?.id ? {
           where: { studentId: session.user.id },
           select: { status: true }
+        } : false,
+        // NEW: Check if student has already rated this tutor
+        reviewsReceived: session?.user?.id ? {
+          where: { studentId: session.user.id },
+          select: { id: true }
         } : false
       },
       orderBy: { rating: "desc" },
-      take: 20 
+      take: 20
     });
 
     // 3. Flatten the structure for the frontend
@@ -50,7 +53,9 @@ export async function GET(req: Request) {
       ...t,
       // If array has items, grab the status, otherwise null
       connectionStatus: t.connectionsAsTutor?.[0]?.status || null,
-      connectionsAsTutor: undefined // Clean up response to avoid sending the array
+      hasRated: (t.reviewsReceived?.length || 0) > 0,
+      connectionsAsTutor: undefined, // Clean up response
+      reviewsReceived: undefined
     }));
 
     return NextResponse.json({ tutors });

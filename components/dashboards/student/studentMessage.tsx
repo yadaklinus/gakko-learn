@@ -1,24 +1,28 @@
 "use client"
 import React, { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { Search, Send, ArrowLeft, MoreVertical, Paperclip, BookOpen, Users } from 'lucide-react';
+import { Search, Send, ArrowLeft, MoreVertical, Paperclip, BookOpen, Users, Check } from 'lucide-react';
 
 // TYPES
 interface Conversation {
   id: string; // This can be bookingId or connectionId
   type: 'BOOKING' | 'CONNECTION';
-  otherUser: { id: string; name: string; image: string | null };
+  otherUser: { id: string; name: string; image: string | null } | null;
   lastMessage: string;
   lastMessageTime: string;
   isUnread: boolean;
+  isGroup: boolean;
+  participants: { id: string; name: string; image: string | null }[];
   contextLabel: string; // "Calculus II" or "General Chat"
 }
 
 interface Message {
   id: string;
   content: string;
-  senderId: any;
+  senderId: string;
+  sender?: { id: string; name: string; image: string | null };
   createdAt: string;
+  isRead: boolean;
 }
 
 const MessagesView: React.FC = () => {
@@ -93,8 +97,9 @@ const MessagesView: React.FC = () => {
     const optimisticMessage: Message = {
       id: tempId,
       content: inputText,
-      senderId: session.user.id,
-      createdAt: new Date().toISOString()
+      senderId: session.user.id as string,
+      createdAt: new Date().toISOString(),
+      isRead: false
     };
 
     // Optimistic Update
@@ -130,18 +135,24 @@ const MessagesView: React.FC = () => {
             <button onClick={() => setActiveChat(null)} className="p-1 hover:bg-slate-100 rounded-lg">
               <ArrowLeft size={20} className="text-slate-600" />
             </button>
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 relative">
-              <img
-                src={activeChat.otherUser.image || `https://ui-avatars.com/api/?name=${activeChat.otherUser.name}`}
-                alt="User"
-                className="w-full h-full object-cover"
-              />
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 relative flex items-center justify-center">
+              {activeChat.isGroup ? (
+                <Users size={20} className="text-slate-400" />
+              ) : (
+                <img
+                  src={activeChat.otherUser?.image || `https://ui-avatars.com/api/?name=${activeChat.otherUser?.name || 'User'}`}
+                  alt="User"
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 leading-tight">{activeChat.otherUser.name}</h3>
+              <h3 className="font-bold text-slate-900 leading-tight">
+                {activeChat.isGroup ? activeChat.contextLabel : activeChat.otherUser?.name}
+              </h3>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center">
                 {activeChat.type === 'BOOKING' ? <BookOpen size={12} className="mr-1 text-indigo-500" /> : <Users size={12} className="mr-1 text-emerald-500" />}
-                {activeChat.contextLabel}
+                {activeChat.isGroup ? `${activeChat.participants.length + 1} Participants` : activeChat.contextLabel}
               </p>
             </div>
           </div>
@@ -158,13 +169,26 @@ const MessagesView: React.FC = () => {
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] md:max-w-[60%] p-3.5 rounded-2xl shadow-md transition-all ${isMe
-                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-indigo-200/50'
-                    : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm shadow-slate-200/50'
+                  ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-indigo-200/50'
+                  : 'bg-white border border-slate-100 text-slate-800 rounded-tl-sm shadow-slate-200/50'
                   }`}>
+                  {activeChat.isGroup && !isMe && msg.sender && (
+                    <p className="text-[10px] font-black text-indigo-600 mb-1 uppercase tracking-wider">
+                      {msg.sender.name}
+                    </p>
+                  )}
                   <p className="text-sm leading-relaxed">{msg.content}</p>
-                  <span className={`text-[10px] block mt-1.5 text-right font-medium ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
-                    {formatTime(msg.createdAt)}
-                  </span>
+                  <div className="flex items-center justify-end space-x-1 mt-1.5 ">
+                    <span className={`text-[10px] font-medium ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
+                      {formatTime(msg.createdAt)}
+                    </span>
+                    {isMe && (
+                      <div className="flex -space-x-1.5 ml-1">
+                        <Check size={10} className={msg.isRead ? "text-blue-300" : "text-indigo-300"} />
+                        <Check size={10} className={msg.isRead ? "text-blue-300" : "text-indigo-300"} />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -213,19 +237,37 @@ const MessagesView: React.FC = () => {
             onClick={() => setActiveChat(chat)}
             className="bg-white border border-slate-100 p-4 rounded-3xl flex items-center space-x-4 cursor-pointer hover:border-indigo-200 hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-0.5 transition-all w-full"
           >
-            <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-100 flex-shrink-0 bg-slate-200 relative">
-              <img
-                src={chat.otherUser.image || `https://ui-avatars.com/api/?name=${chat.otherUser.name}`}
-                alt={chat.otherUser.name}
-                className="object-cover w-full h-full"
-              />
+            <div className={`w-14 h-14 rounded-full border border-slate-100 flex-shrink-0 bg-slate-200 relative ${chat.isGroup ? 'flex items-center justify-center p-1' : 'overflow-hidden'}`}>
+              {chat.isGroup ? (
+                <div className="grid grid-cols-2 gap-0.5 w-full h-full p-0.5">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className={`bg-slate-300 rounded-full overflow-hidden border border-white ${i === 2 ? 'col-span-2 mx-auto w-1/2 h-full -mt-2' : 'w-full h-full'}`}>
+                      {chat.participants[i] && (
+                        <img
+                          src={chat.participants[i].image || `https://ui-avatars.com/api/?name=${encodeURIComponent(chat.participants[i].name)}`}
+                          className="w-full h-full object-cover"
+                          alt="participant"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <img
+                  src={chat.otherUser?.image || `https://ui-avatars.com/api/?name=${chat.otherUser?.name || 'User'}`}
+                  alt={chat.otherUser?.name}
+                  className="object-cover w-full h-full"
+                />
+              )}
               <div className="absolute bottom-0 right-0 p-1 bg-white rounded-full">
                 {chat.type === 'BOOKING' ? <BookOpen size={10} className="text-indigo-600" /> : <Users size={10} className="text-emerald-500" />}
               </div>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center mb-1">
-                <h3 className="font-bold text-slate-900 truncate">{chat.otherUser.name}</h3>
+                <h3 className="font-bold text-slate-900 truncate">
+                  {chat.isGroup ? chat.contextLabel : chat.otherUser?.name}
+                </h3>
                 <span className="text-[10px] text-slate-400 font-medium">{new Date(chat.lastMessageTime).toLocaleDateString()}</span>
               </div>
               <p className={`text-xs truncate ${chat.isUnread ? 'font-bold text-slate-900' : 'text-slate-500'}`}>

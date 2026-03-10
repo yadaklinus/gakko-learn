@@ -1,13 +1,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { 
-  ArrowRight, 
-  Sparkles, 
-  ShieldCheck, 
-  Users, 
-  BrainCircuit, 
-  Mic, 
+import {
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Users,
+  BrainCircuit,
+  Mic,
   Zap,
   CheckCircle2,
   BookOpen,
@@ -51,7 +51,7 @@ const LandingView: React.FC = () => {
             <span>AI-Powered Peer Tutoring</span>
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-            Master your courses with <br /> 
+            Master your courses with <br />
             <span className="text-indigo-600">Verified Peer Experts.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
@@ -74,7 +74,7 @@ const LandingView: React.FC = () => {
             <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop" alt="Dashboard Preview" className="w-full h-auto opacity-90" />
             <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
           </div>
-          
+
           {/* Floating UI Elements */}
           <div className="absolute -top-10 -left-10 hidden lg:block bg-white p-6 rounded-3xl shadow-2xl border border-slate-100 animate-bounce duration-[3000ms]">
             <div className="flex items-center space-x-3">
@@ -100,16 +100,16 @@ const LandingView: React.FC = () => {
         </div>
       </section>
 
-      {/* Social Proof Universities */}
+      {/* Social Proof Sectors */}
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-12">Trusted by students from</p>
+          <p className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-12">Trusted by students across</p>
           <div className="flex flex-wrap justify-center items-center gap-12 grayscale opacity-60">
-            <span className="text-2xl font-black text-slate-800">UNILAG</span>
-            <span className="text-2xl font-black text-slate-800">UI IBADAN</span>
-            <span className="text-2xl font-black text-slate-800">OAU IFE</span>
-            <span className="text-2xl font-black text-slate-800">COVENANT</span>
-            <span className="text-2xl font-black text-slate-800">UNN</span>
+            <span className="text-2xl font-black text-slate-800">COMPUTING</span>
+            <span className="text-2xl font-black text-slate-800">PURE SCIENCES</span>
+            <span className="text-2xl font-black text-slate-800">ARTS & HUMANITIES</span>
+            <span className="text-2xl font-black text-slate-800">SOCIAL SCIENCES</span>
+            <span className="text-2xl font-black text-slate-800">MANAGEMENT</span>
           </div>
         </div>
       </section>
@@ -209,7 +209,6 @@ const LandingView: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-black">Identity Verified</p>
-                    <p className="text-xs opacity-60">MATCHED WITH UNILAG DATABASE</p>
                   </div>
                 </div>
                 <div className="w-48 h-2 bg-white/20 rounded-full overflow-hidden">
@@ -227,26 +226,26 @@ const LandingView: React.FC = () => {
           <div className="text-center mb-20">
             <h2 className="text-4xl font-black text-slate-900 mb-6">Three steps to academic excellence.</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
-              { 
-                step: '01', 
-                icon: <Layout className="text-indigo-600" />, 
-                title: 'Join the Community', 
-                desc: 'Sign up with your university email to join your specific campus community.' 
+              {
+                step: '01',
+                icon: <Layout className="text-indigo-600" />,
+                title: 'Join the Community',
+                desc: 'Sign up with your university email to join your specific campus community.'
               },
-              { 
-                step: '02', 
-                icon: <Search className="text-indigo-600" />, 
-                title: 'Find Your Tutor', 
-                desc: 'Use our AI search to find tutors who have excelled in the exact courses you need help with.' 
+              {
+                step: '02',
+                icon: <Search className="text-indigo-600" />,
+                title: 'Find Your Tutor',
+                desc: 'Use our AI search to find tutors who have excelled in the exact courses you need help with.'
               },
-              { 
-                step: '03', 
-                icon: <Zap className="text-indigo-600" />, 
-                title: 'Learn & Succeed', 
-                desc: 'Book a session, get your AI study guide, and master your subjects with peer support.' 
+              {
+                step: '03',
+                icon: <Zap className="text-indigo-600" />,
+                title: 'Learn & Succeed',
+                desc: 'Book a session, get your AI study guide, and master your subjects with peer support.'
               }
             ].map((item, i) => (
               <div key={i} className="relative">
@@ -269,7 +268,7 @@ const LandingView: React.FC = () => {
         <div className="max-w-5xl mx-auto bg-slate-900 rounded-[48px] p-12 md:p-20 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
-          
+
           <h2 className="text-4xl md:text-6xl font-black text-white mb-8 relative z-10">Ready to crush your next semester?</h2>
           <p className="text-slate-400 text-lg md:text-xl font-medium mb-12 max-w-2xl mx-auto relative z-10">
             Join 5,000+ students already improving their GPAs through collaborative peer-to-peer learning.

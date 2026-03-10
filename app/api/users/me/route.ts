@@ -1,8 +1,8 @@
 // app/api/users/me/route.ts
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; 
-import {prisma} from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 
 // GET: Fetch User Profile + Dashboard Stats
@@ -28,14 +28,14 @@ export async function GET() {
         bio: true,
         hourlyRate: true,
         subjects: true,
-        currentRole:true,
+        currentRole: true,
         rating: true,
         totalReviews: true, // Useful for profile badges
 
         // --- Dashboard Data (Upcoming Bookings) ---
         bookingsAsStudent: {
           where: {
-            date: { gte: new Date() }, 
+            date: { gte: new Date() },
             status: { not: 'CANCELLED' }
           },
           orderBy: { date: 'asc' },
@@ -47,9 +47,35 @@ export async function GET() {
             date: true,
             duration: true,
             tutor: {
-              select: { 
-                name: true, 
-                image: true 
+              select: {
+                name: true,
+                image: true
+              }
+            }
+          }
+        },
+        bookingsAsTutor: {
+          where: {
+            date: { gte: new Date() },
+            status: { not: 'CANCELLED' }
+          },
+          orderBy: { date: 'asc' },
+          take: 10,
+          select: {
+            id: true,
+            subject: true,
+            topic: true,
+            date: true,
+            duration: true,
+            status: true,
+            student: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                bio: true,
+                institution: true,
+                major: true
               }
             }
           }
@@ -61,7 +87,31 @@ export async function GET() {
       return new NextResponse('User not found', { status: 404 });
     }
 
-    return NextResponse.json(userData);
+    // --- Fetch Real Top Rated Tutors ---
+    const topRatedTutors = await prisma.user.findMany({
+      where: {
+        role: { in: ['BOTH'] },
+        id: { not: session.user.id }
+      },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        major: true,
+        rating: true,
+        totalReviews: true
+      },
+      orderBy: [
+        { rating: 'desc' },
+        { totalReviews: 'desc' }
+      ],
+      take: 3
+    });
+
+    return NextResponse.json({
+      ...userData,
+      topRatedTutors
+    });
   } catch (error) {
     console.error('Dashboard/Profile GET Error:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
@@ -92,10 +142,10 @@ export async function PATCH(req: Request) {
         institution: body.institution,
         major: body.major,
         bio: body.bio,
-        
+
         // Convert hourlyRate to float if it exists, otherwise undefined
         hourlyRate: body.hourlyRate ? parseFloat(body.hourlyRate) : undefined,
-        subjects: body.subjects, 
+        subjects: body.subjects,
         // Note: We generally don't let users update 'role' or 'email' casually via a simple profile edit
         // validation for those usually happens in specific settings flows.
       },
@@ -106,7 +156,7 @@ export async function PATCH(req: Request) {
         email: true,
         image: true,
         role: true,
-        currentRole:true,
+        currentRole: true,
         institution: true,
         major: true,
         bio: true,

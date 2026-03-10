@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from '@/lib/auth';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { z } from "zod";
 
 // Updated schema to support multiple students
@@ -31,13 +31,15 @@ export async function GET(req: Request) {
       where: {
         OR: [
           { studentId: session.user.id },
-          { tutorId: session.user.id }
+          { tutorId: session.user.id },
+          { groupStudents: { some: { id: session.user.id } } }
         ],
         ...(status ? { status: status as any } : {})
       },
       include: {
         student: { select: { id: true, name: true, image: true, email: true } },
-        tutor: { select: { id: true, name: true, image: true } }
+        tutor: { select: { id: true, name: true, image: true } },
+        groupStudents: { select: { id: true, name: true, image: true, email: true } }
       },
       orderBy: { date: "asc" }
     });
@@ -71,37 +73,36 @@ export async function POST(req: Request) {
 
     const { tutorId, studentIds, subject, topic, date, duration, location } = result.data;
 
-    // SCENARIO 1: Tutor Scheduling (Multiple Students possible)
+    // SCENARIO 1: Tutor Scheduling (Group or Single)
     if (studentIds && studentIds.length > 0) {
-      // Create a booking for EACH student selected
-      // We use a transaction to ensure all or nothing
-      const createdBookings = await prisma.$transaction(
-        studentIds.map((studentId: string) => 
-          prisma.booking.create({
-            data: {
-              tutorId: currentUserId, // Use the casted ID
-              studentId: studentId,     // Target student
-              subject,
-              topic: topic || null,
-              date: new Date(date),
-              duration,
-              location: location || "Online",
-              status: "CONFIRMED", // Auto-confirm since Tutor initiated
-            },
-            include: { 
-                student: { select: { name: true, email: true } }, 
-                tutor: { select: { name: true } } 
-            }
-          })
-        )
-      );
+      const isGroup = studentIds.length > 1;
 
-      return NextResponse.json({ 
-        message: `Scheduled classes for ${createdBookings.length} student(s)`, 
-        bookings: createdBookings 
+      const booking = await prisma.booking.create({
+        data: {
+          tutorId: currentUserId,
+          subject,
+          topic: topic || null,
+          date: new Date(date),
+          duration,
+          location: location || "Online",
+          status: "CONFIRMED",
+          isGroup: isGroup,
+          groupStudents: {
+            connect: studentIds.map(id => ({ id }))
+          }
+        },
+        include: {
+          groupStudents: { select: { name: true, email: true } },
+          tutor: { select: { name: true } }
+        }
+      });
+
+      return NextResponse.json({
+        message: `Scheduled ${isGroup ? 'group class' : 'class'} for ${studentIds.length} student(s)`,
+        booking: booking
       }, { status: 201 });
-    } 
-    
+    }
+
     // SCENARIO 2: Student Booking a Tutor (Single)
     else if (tutorId) {
       const booking = await prisma.booking.create({
@@ -115,9 +116,9 @@ export async function POST(req: Request) {
           location: location || "Online",
           status: "PENDING", // Needs approval
         },
-        include: { 
-            student: { select: { name: true, email: true } }, 
-            tutor: { select: { name: true } } 
+        include: {
+          student: { select: { name: true, email: true } },
+          tutor: { select: { name: true } }
         }
       });
 

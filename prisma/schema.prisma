@@ -83,6 +83,7 @@ model User {
   sessions          Session[]
   bookingsAsStudent Booking[] @relation("StudentBookings")
   bookingsAsTutor   Booking[] @relation("TutorBookings")
+  groupBookings     Booking[] @relation("GroupBookings")
   reviewsGiven      Review[]  @relation("ReviewsGiven")
   reviewsReceived   Review[]  @relation("ReviewsReceived")
 
@@ -130,10 +131,13 @@ enum BookingStatus {
 model Booking {
   id String @id @default(cuid())
 
-  studentId String
+  studentId String?
   tutorId   String
-  student   User   @relation("StudentBookings", fields: [studentId], references: [id])
-  tutor     User   @relation("TutorBookings", fields: [tutorId], references: [id])
+  student   User?   @relation("StudentBookings", fields: [studentId], references: [id])
+  tutor     User    @relation("TutorBookings", fields: [tutorId], references: [id])
+
+  groupStudents User[]  @relation("GroupBookings")
+  isGroup       Boolean @default(false)
 
   subject    String
   topic      String?
@@ -156,8 +160,8 @@ model Booking {
 
 model Review {
   id        String   @id @default(cuid())
-  bookingId String   @unique
-  booking   Booking  @relation(fields: [bookingId], references: [id])
+  bookingId String?  @unique
+  booking   Booking? @relation(fields: [bookingId], references: [id])
   studentId String
   tutorId   String
   student   User     @relation("ReviewsGiven", fields: [studentId], references: [id])
@@ -166,6 +170,7 @@ model Review {
   comment   String?
   createdAt DateTime @default(now())
 
+  @@unique([studentId, tutorId], name: "studentTutorReview")
   @@index([tutorId])
 }
 

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import {prisma} from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 // params is now a Promise in Next.js 15+
 export async function GET(
-  req: Request, 
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -14,33 +14,34 @@ export async function GET(
     // FIX: Await params before accessing properties
     const { id: conversationId } = await params;
 
-    // 1. Try fetching messages as if it's a Booking
+    // 1. Mark messages from other users as read in this conversation
+    if (conversationId) {
+      await prisma.message.updateMany({
+        where: {
+          OR: [
+            { bookingId: conversationId },
+            { connectionId: conversationId }
+          ],
+          senderId: { not: session.user.id },
+          isRead: false
+        },
+        data: { isRead: true }
+      });
+    }
+
+    // 2. Fetch messages with sender info for UI
     let messages = await prisma.message.findMany({
-      where: { bookingId: conversationId },
+      where: {
+        OR: [
+          { bookingId: conversationId },
+          { connectionId: conversationId }
+        ]
+      },
+      include: {
+        sender: { select: { id: true, name: true, image: true } }
+      },
       orderBy: { createdAt: 'asc' }
     });
-
-    // 2. If no messages found (or check if ID exists as connection), try Connection
-    if (messages.length === 0) {
-        // Double check if it's actually a connection ID to be safe
-        const connectionMessages = await prisma.message.findMany({
-            where: { connectionId: conversationId },
-            orderBy: { createdAt: 'asc' }
-        });
-        
-        if (connectionMessages.length > 0) {
-            messages = connectionMessages;
-        } else {
-            // It might be a new connection with no messages yet.
-            // Check if connection exists to confirm valid ID
-            const validConnection = await prisma.connection.findUnique({ 
-                where: { id: conversationId }
-            });
-            
-            // If valid connection exists, return empty array. If not, it stays empty array (or 404 if you prefer)
-            if (validConnection) messages = []; 
-        }
-    }
 
     return NextResponse.json({ messages });
   } catch (error) {
