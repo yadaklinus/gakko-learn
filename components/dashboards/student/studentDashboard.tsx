@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Bell, BookOpen, Star, BrainCircuit, X, Sparkles, Mic, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { LiveAssistant } from '@/components/LiveAssistant';
 
 // ==========================================
 // 1. TYPES (Matching your Schema & API)
@@ -43,7 +42,6 @@ const StudentHomeView: React.FC = () => {
   // Interaction State
   const [isGenerating, setIsGenerating] = useState(false);
   const [studyGuide, setStudyGuide] = useState<string | null>(null);
-  const [isLiveOpen, setIsLiveOpen] = useState(false);
 
   // ==========================================
   // 2. DATA FETCHING
@@ -297,17 +295,6 @@ const StudentHomeView: React.FC = () => {
         </section>
       </div>
 
-      {/* Floating AI Assistant Button */}
-      <button
-        onClick={() => setIsLiveOpen(true)}
-        className="fixed bottom-6 right-6 md:bottom-10 md:right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl shadow-indigo-200 flex items-center justify-center active:scale-90 transition-transform z-[150] hover:bg-indigo-700"
-      >
-        <Mic size={28} />
-        <span className="absolute -top-1 -right-1 flex h-4 w-4">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
-        </span>
-      </button>
 
       {/* Study Guide Modal */}
       {studyGuide && (
@@ -332,7 +319,6 @@ const StudentHomeView: React.FC = () => {
         </div>
       )}
 
-      <LiveAssistant isOpen={isLiveOpen} onClose={() => setIsLiveOpen(false)} />
     </div>
   );
 };

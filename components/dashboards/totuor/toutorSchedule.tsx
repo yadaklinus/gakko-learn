@@ -194,24 +194,31 @@ const TutorScheduleView: React.FC = () => {
                         <div className="flex items-center space-x-2 mt-1">
                           {s.isGroup ? (
                             <div className="flex -space-x-2 overflow-hidden">
-                              {s.groupStudents.slice(0, 3).map((std, i) => (
+                              {s.groupStudents?.slice(0, 3).map((std, i) => (
                                 <div key={i} className="inline-block h-6 w-6 rounded-full ring-2 ring-white overflow-hidden bg-slate-100">
                                   <img src={std.image || `https://ui-avatars.com/api/?name=${std.name}`} alt="Student" className="w-full h-full object-cover" />
                                 </div>
                               ))}
-                              {s.groupStudents.length > 3 && (
+                              {(s.groupStudents?.length || 0) > 3 && (
                                 <div className="flex items-center justify-center h-6 w-6 rounded-full ring-2 ring-white bg-slate-100 text-[8px] font-bold text-slate-500">
-                                  +{s.groupStudents.length - 3}
+                                  +{(s.groupStudents?.length || 0) - 3}
                                 </div>
                               )}
                             </div>
                           ) : (
                             <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100">
-                              <img src={s.student?.image || `https://ui-avatars.com/api/?name=${s.student?.name || 'User'}`} alt="Student" className="w-full h-full object-cover" />
+                              <img 
+                                src={s.student?.image || s.groupStudents?.[0]?.image || `https://ui-avatars.com/api/?name=${s.student?.name || s.groupStudents?.[0]?.name || 'User'}`} 
+                                alt="Student" 
+                                className="w-full h-full object-cover" 
+                              />
                             </div>
                           )}
                           <p className="text-sm text-slate-500">
-                            {s.isGroup ? `${s.groupStudents.length} Students` : `Student: ${s.student?.name || 'User'}`}
+                            {s.isGroup 
+                              ? `${s.groupStudents?.length || 0} Students` 
+                              : `Student: ${s.student?.name || s.groupStudents?.[0]?.name || 'User'}`
+                            }
                           </p>
                         </div>
                       </div>
@@ -248,69 +255,68 @@ const TutorScheduleView: React.FC = () => {
 
       {/* SCHEDULE MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-md rounded-[32px] p-6 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-md rounded-[28px] p-5 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto">
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200"
+              className="absolute top-4 right-4 p-1.5 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
 
-            <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center">
-              <Plus className="mr-2 text-indigo-600" />
+            <h2 className="text-lg font-black text-slate-900 mb-4 flex items-center">
+              <Plus className="mr-2 text-indigo-600" size={20} />
               Schedule Class
             </h2>
 
-            <form onSubmit={handleScheduleClass} className="space-y-4">
-
-              <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center">
-                <Users className="text-indigo-600 mr-3" size={24} />
-                <p className="text-sm text-indigo-900 font-medium">
-                  This class will be automatically scheduled for all <span className="font-bold">{myStudents?.length || 0}</span> connected students.
+            <form onSubmit={handleScheduleClass} className="space-y-3.5">
+              <div className="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100/50 flex items-center">
+                <Users className="text-indigo-600 mr-2.5 shrink-0" size={20} />
+                <p className="text-[12px] text-indigo-900 leading-tight">
+                  This class will be scheduled for all <span className="font-bold">{myStudents?.length || 0}</span> connected students.
                 </p>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Subject</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Subject</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Calculus II"
-                  className="w-full px-4 py-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                  className="w-full px-4 py-2.5 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium transition-shadow"
                   value={formData.subject}
                   onChange={e => setFormData({ ...formData, subject: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Topic (Optional)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Topic (Optional)</label>
                 <input
                   type="text"
                   placeholder="e.g. Exam Prep"
-                  className="w-full px-4 py-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                  className="w-full px-4 py-2.5 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium transition-shadow"
                   value={formData.topic}
                   onChange={e => setFormData({ ...formData, topic: e.target.value })}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">Date</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Date</label>
                   <input
                     type="date"
                     required
-                    className="w-full px-4 py-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                    className="w-full px-3 py-2.5 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                     value={formData.date}
                     onChange={e => setFormData({ ...formData, date: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">Time</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Time</label>
                   <input
                     type="time"
                     required
-                    className="w-full px-4 py-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                    className="w-full px-3 py-2.5 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                     value={formData.time}
                     onChange={e => setFormData({ ...formData, time: e.target.value })}
                   />
@@ -318,9 +324,9 @@ const TutorScheduleView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Duration (Minutes)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Duration</label>
                 <select
-                  className="w-full px-4 py-3 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                  className="w-full px-4 py-2.5 mt-1 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
                   value={formData.duration}
                   onChange={e => setFormData({ ...formData, duration: Number(e.target.value) })}
                 >
@@ -334,7 +340,7 @@ const TutorScheduleView: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 mt-4"
+                className="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-50 mt-2 text-sm"
               >
                 {isSubmitting ? 'Scheduling...' : 'Confirm Class'}
               </button>

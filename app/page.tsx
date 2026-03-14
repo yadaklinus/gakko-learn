@@ -105,11 +105,12 @@ const LandingView: React.FC = () => {
         <div className="max-w-7xl mx-auto px-6">
           <p className="text-center text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-12">Trusted by students across</p>
           <div className="flex flex-wrap justify-center items-center gap-12 grayscale opacity-60">
-            <span className="text-2xl font-black text-slate-800">COMPUTING</span>
-            <span className="text-2xl font-black text-slate-800">PURE SCIENCES</span>
-            <span className="text-2xl font-black text-slate-800">ARTS & HUMANITIES</span>
-            <span className="text-2xl font-black text-slate-800">SOCIAL SCIENCES</span>
-            <span className="text-2xl font-black text-slate-800">MANAGEMENT</span>
+            <span className="text-2xl font-black text-slate-800">COMPUTER SCIENCE</span>
+            <span className="text-2xl font-black text-slate-800">CYBER SECURITY</span>
+            <span className="text-2xl font-black text-slate-800">INFORMATION TECHNOLOGY</span>
+            <span className="text-2xl font-black text-slate-800">SOFTWARE ENGINEERING</span>
+            <span className="text-2xl font-black text-slate-800">DATA SCIENCE</span>
+            <span className="text-2xl font-black text-slate-800">ARTIFICIAL INTELLIGENCE</span>
           </div>
         </div>
       </section>

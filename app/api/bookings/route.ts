@@ -80,6 +80,7 @@ export async function POST(req: Request) {
       const booking = await prisma.booking.create({
         data: {
           tutorId: currentUserId,
+          studentId: isGroup ? null : studentIds[0], // Set studentId for 1-on-1
           subject,
           topic: topic || null,
           date: new Date(date),

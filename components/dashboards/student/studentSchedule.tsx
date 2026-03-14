@@ -6,7 +6,7 @@ import { Calendar as CalendarIcon, Clock, MapPin, MoreHorizontal, Video, AlertCi
 // Type matching the Prisma Include return
 interface Booking {
   id: string;
-  studentId: string;
+  studentId: string | null;
   tutorId: string;
   subject: string;
   topic: string | null;
@@ -14,8 +14,10 @@ interface Booking {
   duration: number;
   location: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
-  student: { name: string; image: string | null };
+  isGroup: boolean;
+  student: { name: string; image: string | null } | null;
   tutor: { name: string; image: string | null };
+  groupStudents: { name: string; image: string | null }[];
 }
 
 const StudentScheduleView: React.FC = () => {
@@ -109,9 +111,12 @@ const StudentScheduleView: React.FC = () => {
               const { dateStr, timeStr } = formatDateTime(s.date);
               
               // Determine "Other Party" (If I am student, show Tutor. If I am tutor, show Student)
-              const isMeStudent = session?.user?.id === s.studentId;
-              const otherParty = isMeStudent ? s.tutor : s.student;
-              const roleLabel = isMeStudent ? 'Tutor' : 'Student';
+              const isMeStudentId = session?.user?.id === s.studentId;
+              const isMeInGroup = s.groupStudents?.some(gs => gs.name === session?.user?.name); // Fallback search
+              const isMeStudent = isMeStudentId || isMeInGroup;
+              
+              const otherParty = s.tutor; // In student view, "other party" is always the tutor
+              const roleLabel = 'Tutor';
 
               return (
                 <div key={s.id} className="relative pl-8 before:content-[''] before:absolute before:left-[11px] before:top-0 before:bottom-0 before:w-[2px] before:bg-slate-100 last:before:bottom-auto last:before:h-8">
@@ -128,9 +133,9 @@ const StudentScheduleView: React.FC = () => {
                         {s.topic && <p className="text-xs text-indigo-600 font-bold uppercase tracking-wider mb-1">{s.topic}</p>}
                         <div className="flex items-center space-x-2 mt-1">
                             <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-100">
-                                <img src={otherParty.image || `https://ui-avatars.com/api/?name=${otherParty.name}`} alt="Avatar" className="w-full h-full object-cover" />
+                                <img src={otherParty?.image || `https://ui-avatars.com/api/?name=${otherParty?.name || 'Tutor'}`} alt="Avatar" className="w-full h-full object-cover" />
                             </div>
-                            <p className="text-sm text-slate-500">with {otherParty.name}</p>
+                            <p className="text-sm text-slate-500">with {otherParty?.name || 'Tutor'} {s.isGroup && '(Group)'}</p>
                         </div>
                       </div>
                       

@@ -37,12 +37,12 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-         
+
         )}
       >
         <SessionAppProvider>
           <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
-            {children} 
+            {children}
           </Providers>
         </SessionAppProvider>
       </body>
