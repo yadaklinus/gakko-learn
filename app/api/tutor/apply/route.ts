@@ -32,13 +32,20 @@ export async function POST(req: Request) {
 
     const { major, subjects, hourlyRate } = result.data;
 
-    // 3. Update User in DB
-    // We convert the subjects array to a comma-separated string for SQLite
+    // 3. Fetch current user to check role
+    const currentUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { role: true }
+    });
+
+    const newRole = currentUser?.role === "ADMIN" ? "ADMIN" : "BOTH";
+
+    // 4. Update User in DB
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        role: "BOTH", // Or "BOTH" depending on your logic
-        currentRole:"TUTOR",
+        role: newRole,
+        currentRole: "TUTOR",
         major,
         // Join array to string for storage (e.g., "Math,Physics")
         subjects: subjects.join(','), 

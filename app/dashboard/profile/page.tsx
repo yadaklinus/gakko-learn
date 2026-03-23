@@ -15,7 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 enum UserRole {
   STUDENT = "STUDENT",
   TUTOR = "TUTOR",
-  BOTH = "BOTH"
+  BOTH = "BOTH",
+  ADMIN = "ADMIN"
 }
 
 enum CurrentUserRole {
@@ -112,7 +113,7 @@ export default function ProfileView() {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-        await updateSession({ role: "BOTH", currentRole: targetRole });
+        await updateSession({ role: user.role, currentRole: targetRole });
       }
     } catch (error) {
       console.error("Failed to switch role", error);
@@ -262,7 +263,7 @@ export default function ProfileView() {
         </AnimatePresence>
 
         {/* ROLE SWITCH BUTTON */}
-        {session?.user.role === "BOTH" &&
+        {(session?.user.role === "BOTH" || session?.user.role === "ADMIN") &&
           <Card
             isPressable
             onPress={handleRoleSwitch}
