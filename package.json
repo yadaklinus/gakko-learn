@@ -2,14 +2,12 @@
   "name": "next-app-template",
   "version": "0.0.1",
   "private": true,
-  
-    "scripts": {
-      "dev": "next dev --turbopack",
-      "build": "npx prisma generate && next build",
-      "start": "next start",
-      "lint": "eslint --fix"
-    },
-  
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "npx prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint --fix"
+  },
   "dependencies": {
     "@heroui/accordion": "2.2.26",
     "@heroui/alert": "2.2.29",
@@ -59,6 +57,7 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-http": "^2.5.7",
+    "@types/recharts": "^1.8.29",
     "bcryptjs": "^3.0.3",
     "clsx": "2.1.1",
     "framer-motion": "11.18.2",
@@ -71,6 +70,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-hot-toast": "^2.6.0",
+    "recharts": "^3.8.0",
     "sqlite3": "^5.1.7",
     "zod": "^4.3.6"
   },

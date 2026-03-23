@@ -21,6 +21,15 @@ export async function POST(req: Request) {
       }
     });
 
+    const { logActivity } = await import("@/lib/activityLogger");
+    await logActivity({
+      userId: session.user.id ?? undefined,
+      action: "CONNECTION_REQUESTED",
+      entity: "Connection",
+      entityId: connection.id,
+      metadata: { tutorId }
+    });
+
     return NextResponse.json({ connection }, { status: 201 });
   } catch (error: any) {
     if (error.code === 'P2002') {
@@ -65,6 +74,14 @@ export async function PATCH(req: Request) {
         }
       });
     }
+
+    const { logActivity } = await import("@/lib/activityLogger");
+    await logActivity({
+      userId: session.user.id ?? undefined,
+      action: `CONNECTION_${status}`,
+      entity: "Connection",
+      entityId: connectionId,
+    });
 
     return NextResponse.json({ success: true });
 

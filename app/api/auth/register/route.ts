@@ -50,7 +50,6 @@ export async function POST(req: Request) {
     // 3. Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 4. Create User
     const user = await prisma.user.create({
       data: {
         name,
@@ -59,6 +58,15 @@ export async function POST(req: Request) {
         password: hashedPassword,
         role: "STUDENT", // Default role
       },
+    });
+
+    const { logActivity } = await import("@/lib/activityLogger");
+    await logActivity({
+      userId: user.id,
+      action: "USER_CREATED",
+      entity: "User",
+      entityId: user.id,
+      metadata: { email: user.email, role: user.role }
     });
 
     // 5. Return success (exclude password from response)

@@ -98,6 +98,15 @@ export async function POST(req: Request) {
         }
       });
 
+      const { logActivity } = await import("@/lib/activityLogger");
+      await logActivity({
+        userId: currentUserId,
+        action: "BOOKING_CREATED",
+        entity: "Booking",
+        entityId: booking.id,
+        metadata: { type: isGroup ? "GROUP" : "SINGLE", studentCount: studentIds.length }
+      });
+
       return NextResponse.json({
         message: `Scheduled ${isGroup ? 'group class' : 'class'} for ${studentIds.length} student(s)`,
         booking: booking
@@ -121,6 +130,15 @@ export async function POST(req: Request) {
           student: { select: { name: true, email: true } },
           tutor: { select: { name: true } }
         }
+      });
+
+      const { logActivity } = await import("@/lib/activityLogger");
+      await logActivity({
+        userId: currentUserId,
+        action: "BOOKING_REQUESTED",
+        entity: "Booking",
+        entityId: booking.id,
+        metadata: { tutorId: tutorId }
       });
 
       return NextResponse.json({ message: "Request sent", booking }, { status: 201 });

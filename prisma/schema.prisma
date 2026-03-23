@@ -51,6 +51,7 @@ model VerificationToken {
 enum UserRole {
   STUDENT
   BOTH
+  ADMIN
 }
 
 enum CurrentRole {
@@ -69,6 +70,7 @@ model User {
   institution String?
   major       String?
   bio         String?
+  isSuspended Boolean     @default(false)
 
   hourlyRate Float?
   subjects   String?
@@ -92,6 +94,9 @@ model User {
 
   connectionsAsStudent Connection[] @relation("StudentConnections")
   connectionsAsTutor   Connection[] @relation("TutorConnections")
+
+  activityLogs   ActivityLog[]
+  supportTickets SupportTicket[]
 
   @@index([email])
   @@index([role])
@@ -197,4 +202,53 @@ model Message {
   @@index([bookingId])
   @@index([connectionId])
   @@index([senderId])
+}
+
+// New model for activity logs
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. "USER_CREATED", "BOOKING_CANCELLED"
+  entity    String   // e.g. "User", "Booking", "Connection"
+  entityId  String?
+  metadata  String?  // JSON string for extra context
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// New model for user-reported issues/complaints
+model SupportTicket {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  status      TicketStatus @default(OPEN)
+  priority    Priority     @default(MEDIUM)
+  adminNote   String?
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
