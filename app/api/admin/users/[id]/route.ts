@@ -5,12 +5,12 @@ import { logActivity } from "@/lib/activityLogger";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const user = await prisma.user.findUnique({
@@ -57,12 +57,12 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const body = await req.json();
@@ -100,12 +100,12 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const user = await prisma.user.findUnique({ where: { id } });

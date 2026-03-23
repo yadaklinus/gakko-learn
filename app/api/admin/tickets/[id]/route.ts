@@ -5,12 +5,12 @@ import { logActivity } from "@/lib/activityLogger";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     const { status, priority, adminNote } = (await req.json()) as {
