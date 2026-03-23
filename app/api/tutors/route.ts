@@ -12,8 +12,9 @@ export async function GET(req: Request) {
     // 1. Fetch Tutors
     const tutorsData = await prisma.user.findMany({
       where: {
-        role: { in: ["BOTH"] },
-
+        role: { in: ["BOTH", "ADMIN"] }, // Include BOTH and ADMIN if they have subjects
+        subjects: { not: null },
+        
         // FIX: Only apply NOT filter if session.user.id exists
         ...(session?.user?.id ? { NOT: { id: session.user.id } } : {}),
 

@@ -90,8 +90,10 @@ export async function GET() {
     // --- Fetch Real Top Rated Tutors ---
     const topRatedTutors = await prisma.user.findMany({
       where: {
-        role: { in: ['BOTH'] },
-        id: { not: session.user.id }
+        role: { in: ['BOTH', 'ADMIN'] },
+        id: { not: session.user.id },
+        subjects: { not: null },
+        rating: { gt: 0 }
       },
       select: {
         id: true,
@@ -146,6 +148,7 @@ export async function PATCH(req: Request) {
         // Convert hourlyRate to float if it exists, otherwise undefined
         hourlyRate: body.hourlyRate ? parseFloat(body.hourlyRate) : undefined,
         subjects: body.subjects,
+        currentRole: body.currentRole, // Allow updating currentRole for switching views
         // Note: We generally don't let users update 'role' or 'email' casually via a simple profile edit
         // validation for those usually happens in specific settings flows.
       },
