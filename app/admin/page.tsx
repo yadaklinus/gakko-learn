@@ -1,15 +1,37 @@
-import { 
-  Users, 
-  Calendar, 
-  Ticket, 
-  Star, 
-  TrendingUp, 
-  Activity 
+import {
+  Users,
+  Calendar,
+  Ticket,
+  Star,
+  TrendingUp,
+  Activity
 } from "lucide-react";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import { prisma } from "@/lib/prisma";
 
-async function getStats() {
+type LogWithUser = {
+  id: string;
+  action: string;
+  entity: string;
+  createdAt: Date;
+  user: { name: string; image: string | null } | null;
+};
+
+interface AdminStats {
+  totalUsers: number;
+  totalBookings: number;
+  openTickets: number;
+  totalTutors: number;
+  recentLogs: LogWithUser[];
+  topTutors: {
+    name: string;
+    rating: number;
+    totalReviews: number;
+    image: string | null;
+  }[];
+}
+
+async function getStats(): Promise<AdminStats> {
   const [
     totalUsers,
     totalBookings,
@@ -26,7 +48,7 @@ async function getStats() {
     take: 10,
     orderBy: { createdAt: "desc" },
     include: { user: { select: { name: true, image: true } } }
-  });
+  }) as unknown as LogWithUser[];
 
   const topTutors = await prisma.user.findMany({
     where: { role: "BOTH" },
@@ -56,30 +78,30 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <AdminStatCard 
-          label="Total Users" 
-          value={stats.totalUsers} 
-          icon={Users} 
+        <AdminStatCard
+          label="Total Users"
+          value={stats.totalUsers}
+          icon={Users}
           trend={{ value: 12, isUp: true }}
           color="indigo"
         />
-        <AdminStatCard 
-          label="Total Bookings" 
-          value={stats.totalBookings} 
-          icon={Calendar} 
+        <AdminStatCard
+          label="Total Bookings"
+          value={stats.totalBookings}
+          icon={Calendar}
           trend={{ value: 5, isUp: true }}
           color="blue"
         />
-        <AdminStatCard 
-          label="Open Tickets" 
-          value={stats.openTickets} 
-          icon={Ticket} 
+        <AdminStatCard
+          label="Open Tickets"
+          value={stats.openTickets}
+          icon={Ticket}
           color="amber"
         />
-        <AdminStatCard 
-          label="Total Tutors" 
-          value={stats.totalTutors} 
-          icon={Star} 
+        <AdminStatCard
+          label="Total Tutors"
+          value={stats.totalTutors}
+          icon={Star}
           color="green"
         />
       </div>
@@ -96,13 +118,12 @@ export default async function AdminDashboard() {
           </div>
           <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden backdrop-blur-sm">
             <div className="divide-y divide-gray-800">
-              {stats.recentLogs.map((log) => (
+              {stats.recentLogs.map((log: LogWithUser) => (
                 <div key={log.id} className="p-4 flex items-center gap-4 hover:bg-gray-800/30 transition-colors">
-                  <div className={`p-2 rounded-lg ${
-                    log.action.includes('CREATED') ? 'bg-green-500/10 text-green-400' :
-                    log.action.includes('DELETED') ? 'bg-red-500/10 text-red-400' :
-                    'bg-indigo-500/10 text-indigo-400'
-                  }`}>
+                  <div className={`p-2 rounded-lg ${log.action.includes('CREATED') ? 'bg-green-500/10 text-green-400' :
+                      log.action.includes('DELETED') ? 'bg-red-500/10 text-red-400' :
+                        'bg-indigo-500/10 text-indigo-400'
+                    }`}>
                     <Activity className="w-4 h-4" />
                   </div>
                   <div className="flex-1">
